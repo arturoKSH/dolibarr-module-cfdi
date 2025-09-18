@@ -1,0 +1,1 @@
+Se agrego la funcion "amountTotal" en los triggers dentro de este modulo para su funcionamiento, pero este no es un desarrollo nativo perteneciente al CFDI.
