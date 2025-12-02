@@ -1,0 +1,131 @@
+<?php
+
+namespace Eclipxe\Enum\Internal;
+
+use Eclipxe\Enum\Exceptions\IndexOverrideException;
+use Eclipxe\Enum\Exceptions\ValueOverrideException;
+use ReflectionClass;
+
+/**
+ * This is a helper that perform discovery
+ *
+ * This is an internal class, do not use it by your own. Changes on this class are not library breaking changes.
+ * @internal
+ */
+class EntriesPopulator
+{
+    /** @var string */
+    private $className;
+
+    /** @var array<string, mixed> */
+    private $overrideValues;
+
+    /** @var array<string, mixed> */
+    private $overrideIndices;
+
+    /** @var Entries */
+    private $parentEntries;
+
+    /**
+     * EntriesPopulator constructor.
+     *
+     * @param string $className
+     * @param array<string, mixed> $overrideValues
+     * @param array<string, mixed> $overrideIndices
+     * @param Entries $parentEntries
+     */
+    public function __construct(
+        $className,
+        $overrideValues,
+        $overrideIndices,
+        $parentEntries
+    ) {
+        $this->className = $className;
+        $this->overrideValues = $overrideValues;
+        $this->overrideIndices = $overrideIndices;
+        $this->parentEntries = $parentEntries;
+    }
+
+    public function getClassName()
+    {
+        return $this->className;
+    }
+
+    public function populate($entries)
+    {
+        // populate with parents first
+        $entries->append($this->parentEntries);
+
+        // populate with discovered
+        $names = array_filter(
+            $this->resolveNamesFromDocBlocks(),
+            function ($name) use ($entries) {
+                return ! $entries->hasName($name);
+            }
+        );
+        foreach ($names as $name) {
+            //$newValue = $this->overrideValue($name) ?? $name; ->Erick
+            $newValue = $this->overrideValue($name) ?: $name;
+            if (null !== $entries->findEntryByValue($newValue)) {
+                throw ValueOverrideException::create($this->getClassName(), $newValue);
+            }
+
+            //$newIndex = $this->overrideIndex($name) ?? $entries->nextIndex(); ->Erick
+            $newIndex = $this->overrideIndex($name) ?: $entries->nextIndex();
+            if (null !== $entries->findEntryByIndex($newIndex)) {
+                throw IndexOverrideException::create($this->getClassName(), strval($newIndex));
+            }
+
+            $entries->put($name, new Entry($newValue, $newIndex));
+        }
+    }
+
+    public function overrideValue($name)
+    {
+        //$value = $this->overrideValues[$name] ?? null; ->Erick
+        $value = $this->overrideValues[$name] ?: null;
+        if (null === $value || ! is_string($value)) {
+            return null;
+        }
+        return $value;
+    }
+
+    public function overrideIndex($name)
+    {
+        //$index = $this->overrideIndices[$name] ?? null; ->Erick
+        $index = $this->overrideIndices[$name] ?: null;
+        if (null === $index || ! is_int($index)) {
+            return null;
+        }
+        return $index;
+    }
+
+    /**
+     * @return array<string>
+     * @throws \ReflectionException
+     */
+    public function resolveNamesFromDocBlocks()
+    {
+        // get comments
+        /** @var class-string $className */
+        $className = $this->getClassName();
+        $reflectionClass = new ReflectionClass($className);
+        $docComment = strval($reflectionClass->getDocComment());
+        return $this->resolveNamesFromDocComment($docComment);
+    }
+
+    /**
+     * @param string $docComment
+     * @return array<string>
+     */
+    public function resolveNamesFromDocComment($docComment)
+    {
+        // read declarations @method static self WORD()
+        //  [*\t ]*: any asterisk, space or tab
+        //  [\w]+: any word letters, numbers and underscore
+        //  /m: ^ match beginning of the line
+        preg_match_all('/^[*\t ]*@method static (self|static) ([\w]+)\(\)/m', $docComment, $matches);
+        //return $matches[2] ?? []; ->Erick
+        return $matches[2] ?: [];
+    }
+}

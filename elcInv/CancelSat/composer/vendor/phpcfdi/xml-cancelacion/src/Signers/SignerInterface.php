@@ -1,0 +1,33 @@
+<?php
+
+namespace PhpCfdi\XmlCancelacion\Signers;
+
+use DOMDocument;
+use PhpCfdi\XmlCancelacion\Capsules\CapsuleInterface;
+use PhpCfdi\XmlCancelacion\Credentials;
+use PhpCfdi\XmlCancelacion\Exceptions\CapsuleRfcDoesnotBelongToCertificateRfc;
+
+/**
+ * The classes that implement this interface must be able to take a DOMDocument
+ * and append a signature according to SAT requirements.
+ */
+interface SignerInterface
+{
+    /**
+     * Sign de capsule and return the generated XML
+     *
+     * @param CapsuleInterface $capsule
+     * @param Credentials $credentials
+     * @return string
+     * @throws CapsuleRfcDoesnotBelongToCertificateRfc
+     */
+    public function signCapsule($capsule, $credentials,$ruta);
+
+    /**
+     * Sign the DOMDocument with the specified credentials
+     *
+     * @param DOMDocument $document
+     * @param Credentials $credentials
+     */
+    public function signDocument($document, $credentials);
+}
