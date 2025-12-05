@@ -274,6 +274,67 @@ if ($action == 'updateMask') {
 	}
 }
 
+// ---------- inicio: handler para subir certificado .cer y llave .key ----------
+if ($action == 'savecert' && $user->admin) {
+    // seguridad token opcional
+    if (empty($_REQUEST['token']) || $_REQUEST['token'] !== newToken()) {
+        setEventMessages($langs->trans('ErrorBadToken'), null, 'errors');
+    } else {
+        $certPsw = GETPOST('cert_psw', 'alpha');
+        if (empty($_FILES['cert_cer']) || empty($_FILES['cert_key'])) {
+            setEventMessages($langs->trans('MissingFile'), null, 'errors');
+        } else {
+            $cer = $_FILES['cert_cer'];
+            $key = $_FILES['cert_key'];
+
+            $extCer = strtolower(pathinfo($cer['name'], PATHINFO_EXTENSION));
+            $extKey = strtolower(pathinfo($key['name'], PATHINFO_EXTENSION));
+
+            // Validar extensiones básicas
+            if (!in_array($extCer, ['cer','pem']) || !in_array($extKey, ['key','pem'])) {
+                setEventMessages($langs->trans('InvalidFileType'), null, 'errors');
+            } elseif ($cer['error'] !== UPLOAD_ERR_OK || $key['error'] !== UPLOAD_ERR_OK) {
+                setEventMessages($langs->trans('UploadError'), null, 'errors');
+            } else {
+                // Determinar nombre del certificado (basename sin extensión)
+                $certName = pathinfo($cer['name'], PATHINFO_FILENAME);
+                if (empty($certName)) $certName = 'cert_'.time();
+
+                $targetDir = DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/'.$certName.'/';
+                if (!is_dir($targetDir)) {
+                    if (!mkdir($targetDir, 0777, true)) {
+                        setEventMessages($langs->trans('CantCreateDir')." ".$targetDir, null, 'errors');
+                        // evitar continuar si no se puede crear carpeta
+                        header('Location: '.$_SERVER['PHP_SELF']);
+                        exit;
+                    }
+					chmod($targetDir, 0777); // asegurar permisos
+                }
+
+                $dstCer = $targetDir.$certName.'.cer';
+                $dstKey = $targetDir.$certName.'.key';
+
+                $okCer = move_uploaded_file($cer['tmp_name'], $dstCer);
+                $okKey = move_uploaded_file($key['tmp_name'], $dstKey);
+
+                if ($okCer && $okKey) {
+                    // Guardar constantes Dolibarr para usar en el módulo
+                    dolibarr_set_const($db, 'MAIN_INFO_CFDI_CERT_NAME', $certName, 'chaine', 0, '', $conf->entity);
+                    dolibarr_set_const($db, 'MAIN_INFO_CFDI_CERT_PSW', $certPsw, 'chaine', 0, '', $conf->entity);
+
+                    setEventMessages($langs->trans('FilesSavedOK'), null, 'mesgs');
+                } else {
+                    setEventMessages($langs->trans('CantMoveUploadedFiles'), null, 'errors');
+                }
+            }
+        }
+    }
+    // evitar repost al recargar
+    header('Location: '.$_SERVER['PHP_SELF']);
+    exit;
+}
+// ---------- fin: handler para subir certificado .cer y llave .key ----------
+
 
 
 /*
@@ -299,6 +360,17 @@ print dol_get_fiche_head($head, 'settings', $langs->trans($page_name), -1, "cfdi
 // Setup page goes here
 echo '<span class="opacitymedium">'.$langs->trans("CfdiSetupPage").'</span><br><br>';
 
+// Formulario para subir certificado .cer y llave .key
+print '<h4>'.$langs->transnoentities('UploadCertAndKey').'</h4>';
+print '<form method="post" enctype="multipart/form-data" action="'.$_SERVER['PHP_SELF'].'?action=savecert&token='.newToken().'">';
+print '<table class="border" width="100%">';
+print '<tr><td width="200">'.$langs->transnoentities('CertFile (.cer)').'</td><td><input type="file" name="cert_cer" accept=".cer,.pem" required></td></tr>';
+print '<tr><td>'.$langs->transnoentities('KeyFile (.key)').'</td><td><input type="file" name="cert_key" accept=".key,.pem" required></td></tr>';
+print '<tr><td>'.$langs->transnoentities('CertPassword').'</td><td><input type="password" name="cert_psw" value=""></td></tr>';
+print '<tr><td></td><td><button class="butAction" type="submit">'.$langs->transnoentities('Save').'</button></td></tr>';
+print '</table>';
+print '</form>';
+print '<br>';
 
 if ($action == 'edit') {
 	print $formSetup->generateOutput(true);

@@ -8,7 +8,7 @@ if(!file_exists($fname)){
 
 $handle = fopen($fname, "r");
 $sData = '';
-include(DOL_DOCUMENT_ROOT.'/elcInv/phpqrcode/qrlib.php'); //ehm
+include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/phpqrcode/qrlib.php'); //ehm
 
 
 

@@ -8,7 +8,7 @@
 
 $certName = $conf->global->MAIN_INFO_CFDI_CERT_NAME;
 $certPsw = $conf->global->MAIN_INFO_CFDI_CERT_PSW;
-$localPht = DOL_DOCUMENT_ROOT.'/elcInv/';
+$localPht = DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/';
 $xlst = "/xslt/origStr40.xslt";
 
 updCertVal($localPht, $certName);

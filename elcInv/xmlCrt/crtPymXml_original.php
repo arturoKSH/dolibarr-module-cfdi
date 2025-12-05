@@ -18,7 +18,7 @@ require_once DOL_DOCUMENT_ROOT . '/core/class/html.formfile.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.formmargin.class.php';
 
 
-include(DOL_DOCUMENT_ROOT.'/elcInv/xmlCrt/stampCfdi.php'); //ehm
+include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/xmlCrt/stampCfdi.php'); //ehm
 
 $objectt = new Facture($db);
 

@@ -367,7 +367,7 @@ class InterfaceMyTrigger extends DolibarrTriggers
         // set variables need field crtInvXml.php
         $id = $object->id;
         $db = $this->db;
-        include(DOL_DOCUMENT_ROOT.'/elcInv/xmlCrt/crtInvXml.php');
+        include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/xmlCrt/crtInvXml.php');
     }
 
     public function eventCreatePaiement(User $user, $object){

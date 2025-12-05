@@ -182,7 +182,8 @@ if (isModEnabled('cfdi') && $user->rights->cfdi->read)
 }
 END MODULEBUILDER DRAFT MYOBJECT */
 
-
+$setupUrl = dol_buildpath('/cfdi/admin/setup.php', 1);
+print '<a class="butAction" href="'.$setupUrl.'"><span class="fas fa-cog"></span> Configurar CFDI</a>';
 print '</div><div class="fichetwothirdright">';
 
 

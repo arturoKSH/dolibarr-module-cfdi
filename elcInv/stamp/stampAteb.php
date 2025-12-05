@@ -36,8 +36,8 @@ if($action == 'confirm_CancelSat' && $confirm == 'yes'){
     if($valid == TRUE)
     {
                 
-        include(DOL_DOCUMENT_ROOT.'/elcInv/CancelSat/composer/vendor/autoload.php');
-        include(DOL_DOCUMENT_ROOT.'/elcInv/CancelSat/soapcancel.php');
+        include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/CancelSat/composer/vendor/autoload.php');
+        include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/CancelSat/soapcancel.php');
         $datosempresa = " SELECT name,value ";
         $datosempresa.= " FROM ".MAIN_DB_PREFIX."const where name like 'MAIN_INFO%'";
         $resdatosempresa = $db->query($datosempresa);
@@ -62,10 +62,16 @@ if($action == 'confirm_CancelSat' && $confirm == 'yes'){
                         
         $uuidRpl = $uuid;
         //$credentials = new Credentials(DOL_DOCUMENT_ROOT.'/elcInv/abc/abc.cer.pem',DOL_DOCUMENT_ROOT.'/elcInv/abc/abc.key.pem','Blgstcscv89');
+        $certName = $conf->global->MAIN_INFO_CFDI_CERT_NAME;
+        $certPsw  = $conf->global->MAIN_INFO_CFDI_CERT_PSW;
 
-        $credentials = new Credentials(	DOL_DOCUMENT_ROOT.'/elcInv/ZAKILI/ZAKILI.cer.pem',
-											DOL_DOCUMENT_ROOT.'/elcInv/ZAKILI/ZAKILI.key.pem',
-											'Carlos009C');
+        $localPht = DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/'.$certName.'/';
+
+        $credentials = new Credentials(
+                $localPht.$certName.'.cer.pem',   // Ruta al CER PEM
+                $localPht.$certName.'.key.pem',   // Ruta al KEY PEM
+                $certPsw                           // Contraseña correcta
+            );
         $dataCancelCfdi = new Cancellation($RfcEmisor, [$uuid], new DateTimeImmutable(), $reason, $uuidRpl);
         $rutaCancelCfdi=DOL_DATA_ROOT."/facture/".$object->ref."/".$object->ref."-SolicitudCancel.xml";
         $xmlok = (new DOMSigner())->signCapsule($dataCancelCfdi, $credentials,$rutaCancelCfdi);
@@ -94,7 +100,7 @@ if($action == 'confirm_CancelSat' && $confirm == 'yes'){
             unset($_SESSION['CancelStatus']);
         }
       
-        include(DOL_DOCUMENT_ROOT.'/elcInv/CancelSat/pdfCancel.php'); //ehm
+        include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/CancelSat/pdfCancel.php'); //ehm
 
         $outputlangs = $langs;
         $CancelCfdiPDF= new pdf();

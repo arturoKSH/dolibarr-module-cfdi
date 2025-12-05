@@ -5,7 +5,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-include(DOL_DOCUMENT_ROOT.'/elcInv/phpqrcode/qrlib.php');
+include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/phpqrcode/qrlib.php');
 
 $doc = new DOMDocument('1.0', 'UTF-8');
 $doc->load($fname);

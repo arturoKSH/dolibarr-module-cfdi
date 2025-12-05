@@ -17,7 +17,7 @@ require '../CancelSat/composer/vendor/autoload.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.formfile.class.php';
 //require_once DOL_DOCUMENT_ROOT . '/core/class/html.formmargin.class.php';
 
-include(DOL_DOCUMENT_ROOT.'/elcInv/xmlCrt/stampCfdi.php'); //ehm
+include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/xmlCrt/stampCfdi.php'); //ehm
 
 
 
@@ -61,7 +61,7 @@ $trackid='inv'.$id;
 if ($action=='builddoc') {
 	$db->begin();
         
-	include(DOL_DOCUMENT_ROOT.'/elcInv/infPdf/pdf.php');
+	include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/infPdf/pdf.php');
         //include('./pdf.php');
 	$outputlangs = $langs;
 	$pdfP= new pdf();
@@ -77,12 +77,12 @@ if ($action=='pdfReg') {
 	
 	$_SESSION['timbrar']='yes';
         
-        include(DOL_DOCUMENT_ROOT.'/elcInv/phpqrcode/qr.php');
+        include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/phpqrcode/qr.php');
 	
 	 
 	
 	$db->begin();
-	include(DOL_DOCUMENT_ROOT.'/elcInv/infPdf/pdf.php');
+	include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/infPdf/pdf.php');
 	$outputlangs = $langs;
 	$pdfP= new pdf();
 	$pdfP->__construct($db);
@@ -174,12 +174,12 @@ if ($action == 'confirm_timbrar' && $confirm == 'yes') {
     $table = 'paiement';
     $field = 'rowid';    
         
-        include(DOL_DOCUMENT_ROOT.'/elcInv/stamp/ateb.php'); //ehm
+        include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/stamp/ateb.php'); //ehm
 	//include('../soap.php');
 	 
 	
 	$db->begin();
-      include(DOL_DOCUMENT_ROOT.'/elcInv/infPdf/pdf.php');  
+      include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/infPdf/pdf.php');  
 	//include(DOL_DOCUMENT_ROOT.'/elcInv/infPdf/pdf.php'); //ehm
 	$outputlangs = $langs;
 	$pdfP= new pdf();
@@ -252,8 +252,8 @@ if ($action == 'confirm_Cancel_CFDI' && $confirm == 'yes') {
 
     $certN = $conf->global->MAIN_INFO_CFDI_CERT_NAME;
 	$credentials = new Credentials(
-    DOL_DOCUMENT_ROOT.'/elcInv/'.$certN.'/'.$certN.'.cer.pem',
-    DOL_DOCUMENT_ROOT.'/elcInv/'.$certN.'/'.$certN.'.key.pem',
+    DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/'.$certN.'/'.$certN.'.cer.pem',
+    DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/'.$certN.'/'.$certN.'.key.pem',
     $conf->global->MAIN_INFO_CFDI_CERT_PSW);          
             
             
@@ -298,7 +298,7 @@ if ($action == 'confirm_Cancel_CFDI' && $confirm == 'yes') {
 
     if ($action=='xml') {
                     //timbrar Pago
-            include(DOL_DOCUMENT_ROOT.'/elcInv/dbExc/excFetch.php'); //ehm
+            include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/dbExc/excFetch.php'); //ehm
             
             $objsociete = getCustInfPym($id);            
             $objdtl = getDtlPym($id);
@@ -678,7 +678,7 @@ if ($action == 'confirm_Cancel_CFDI' && $confirm == 'yes') {
             unlink('./sello.txt');
 
             // $db->begin();
-             include(DOL_DOCUMENT_ROOT.'/elcInv/infPdf/pdf.php');
+             include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/infPdf/pdf.php');
             //  $outputlangs = $langs;
             //  $pdfP= new pdf();
             //  $pdfP->__construct($db);

@@ -283,7 +283,7 @@ class modCfdi extends DolibarrModules
 		$r++;
 		/* END MODULEBUILDER PERMISSIONS */
 		//add tab Facturas relacionadas  on facture client 
-		$this->tabs = array('invoice:+facsrel:Facturas relacionadas:mylangfile@cfdi:$user->rights->facture->lire:/elcInv/compta/facsrel.php?facid=__ID__'); 
+		$this->tabs = array('invoice:+facsrel:Facturas relacionadas:mylangfile@cfdi:$user->rights->facture->lire:/custom/cfdi/compta/facsrel.php?facid=__ID__'); 
 		
 		// Main menu entries to add
 		$this->menu = array();

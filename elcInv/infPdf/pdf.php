@@ -222,7 +222,7 @@
 		$outputlangs->loadLangs(array("main", "bills", "products", "dict", "companies"));
 
 		if(!function_exists("getTotPymInf"))
-                                include(DOL_DOCUMENT_ROOT.'/elcInv/dbExc/excFetch.php'); //ehm   
+                                include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/dbExc/excFetch.php'); //ehm   
 
 
 		//mkdir(DOL_DATA_ROOT."/facture/".$ref, 0700);

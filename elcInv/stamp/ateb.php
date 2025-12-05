@@ -199,12 +199,12 @@
          //include(DOL_DOCUMENT_ROOT.'/elcInv/phpqrcode/qrlib.php');
         $fileQr = DOL_DATA_ROOT."/facture/".$object->ref."/".$object->ref.".png";
         if(!function_exists("getRfcEmisor"))
-          include(DOL_DOCUMENT_ROOT.'/elcInv/phpqrcode/functionQR.php'); 
+          include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/phpqrcode/functionQR.php'); 
 
       //  $doc = new DOMDocument('1.0', 'UTF-8');
       //  $doc->load($fname);
       //  QRcode::png(getURL($doc),$fileQr, QR_ECLEVEL_M, 2.75, 2.75);        
-        $pthFiles = DOL_DOCUMENT_ROOT."/elcInv/".$id.".txt";
+        $pthFiles = DOL_DOCUMENT_ROOT."/custom/cfdi/elcInv/".$id.".txt";
           if (file_exists($pthFiles) )
             unlink($pthFiles);
     }else{

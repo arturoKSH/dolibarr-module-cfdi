@@ -1,8 +1,8 @@
 <?php
 
 //$xlst = "/xslt/origStr40.xslt";
-include(DOL_DOCUMENT_ROOT.'/elcInv/xmlCrt/stampCfdi.php'); //ehm
-include(DOL_DOCUMENT_ROOT.'/elcInv/dbExc/excFetch.php'); //ehm
+include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/xmlCrt/stampCfdi.php'); //ehm
+include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/dbExc/excFetch.php'); //ehm
 
 $search  = array('-', ',');
 $replace = array('', '');

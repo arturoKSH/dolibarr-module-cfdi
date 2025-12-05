@@ -148,7 +148,7 @@ class ActionsCfdi
 		$db = $this->db;
 		
 		$timbre=0;
-		include(DOL_DOCUMENT_ROOT.'/elcInv/stamp/ateb.php');
+		include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/stamp/ateb.php');
 		// echo 'aaaaaaa';
 		if (empty($conf->global->MAIN_DISABLE_PDF_AUTOUPDATE)){
 			$outputlangs = $langs;
@@ -208,7 +208,7 @@ class ActionsCfdi
         // set variables need field crtInvXml.php
         $id = $object->id;
         $db = $this->db;
-        include(DOL_DOCUMENT_ROOT.'/elcInv/xmlCrt/crtInvXml.php');
+        include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/xmlCrt/crtInvXml.php');
 
 
     }
@@ -223,8 +223,8 @@ class ActionsCfdi
         $db = $this->db;
 
 		$confirm =  GETPOST('confirm', 'alpha');
-		require DOL_DOCUMENT_ROOT.'/elcInv/CancelSat/composer/vendor/autoload.php';
-        include(DOL_DOCUMENT_ROOT.'/elcInv/stamp/stampAteb.php');
+		require DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/CancelSat/composer/vendor/autoload.php';
+        include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/stamp/stampAteb.php');
 		$result = $this->StockCfdi($user,$langs,$object->array_options['options_warehouse'],$object->lines);
 
     }
