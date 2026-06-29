@@ -79,7 +79,8 @@ INSERT INTO `llx_kshtyperelsat` (`rowid`, `idsat`, `description`) VALUES
 CREATE TABLE `llx_serie` (
   `rowid` int(11) NOT NULL,
   `serie` varchar(16) DEFAULT NULL,
-  `status` tinyint(4) DEFAULT NULL
+  `status` tinyint(4) DEFAULT NULL,
+  `entity` int(11) NOT NULL DEFAULT 1
 );
 
 --
@@ -91,12 +92,12 @@ TRUNCATE TABLE `llx_serie`;
 -- Volcado de datos para la tabla `llx_serie`
 --
 
-INSERT INTO `llx_serie` (`rowid`, `serie`, `status`) VALUES
-(10, 'C', 1),
-(11, 'A', 1),
-(12, 'B', 1),
-(13, 'D', 1),
-(14, 'E', 1);
+INSERT INTO `llx_serie` (`rowid`, `serie`, `status`, `entity`) VALUES
+(10, 'C', 1, 1),
+(11, 'A', 1, 1),
+(12, 'B', 1, 1),
+(13, 'D', 1, 1),
+(14, 'E', 1, 1);
 
 -- --------------------------------------------------------
 

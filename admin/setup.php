@@ -97,62 +97,15 @@ if (!class_exists('FormSetup')) {
 $formSetup = new FormSetup($db);
 
 
-// HTTP HOST
-$item = $formSetup->newItem('NO_PARAM_JUST_TEXT');
-$item->fieldOverride = (empty($_SERVER['HTTPS']) ? 'http://' : 'https://') . $_SERVER['HTTP_HOST'];
-$item->cssClass = 'minwidth500';
+// Credenciales del PAC (Proveedor Autorizado de Certificación)
+$item = $formSetup->newItem('CFDI_PAC_USER');
+$item->nameText = $langs->transnoentities('CfdiPacUser');
+$item->cssClass = 'minwidth300';
 
-// Setup conf CFDI_MYPARAM1 as a simple string input
-$item = $formSetup->newItem('CFDI_MYPARAM1');
-$item->defaultFieldValue = 'default value';
-
-// Setup conf CFDI_MYPARAM2 as a simple textarea input but we replace the text of field title
-$item = $formSetup->newItem('CFDI_MYPARAM2');
-$item->nameText = $item->getNameText().' more html text ';
-
-// Setup conf CFDI_MYPARAM3
-$item = $formSetup->newItem('CFDI_MYPARAM3');
-$item->setAsThirdpartyType();
-
-// Setup conf CFDI_MYPARAM4 : exemple of quick define write style
-$formSetup->newItem('CFDI_MYPARAM4')->setAsYesNo();
-
-// Setup conf CFDI_MYPARAM5
-$formSetup->newItem('CFDI_MYPARAM5')->setAsEmailTemplate('thirdparty');
-
-// Setup conf CFDI_MYPARAM6
-$formSetup->newItem('CFDI_MYPARAM6')->setAsSecureKey()->enabled = 0; // disabled
-
-// Setup conf CFDI_MYPARAM7
-$formSetup->newItem('CFDI_MYPARAM7')->setAsProduct();
-
-$formSetup->newItem('Title')->setAsTitle();
-
-// Setup conf CFDI_MYPARAM8
-$item = $formSetup->newItem('CFDI_MYPARAM8');
-$TField = array(
-	'test01' => $langs->trans('test01'),
-	'test02' => $langs->trans('test02'),
-	'test03' => $langs->trans('test03'),
-	'test04' => $langs->trans('test04'),
-	'test05' => $langs->trans('test05'),
-	'test06' => $langs->trans('test06'),
-);
-$item->setAsMultiSelect($TField);
-$item->helpText = $langs->transnoentities('CFDI_MYPARAM8');
-
-
-// Setup conf CFDI_MYPARAM9
-$formSetup->newItem('CFDI_MYPARAM9')->setAsSelect($TField);
-
-
-// Setup conf CFDI_MYPARAM10
-$item = $formSetup->newItem('CFDI_MYPARAM10');
-$item->setAsColor();
-$item->defaultFieldValue = '#FF0000';
-$item->nameText = $item->getNameText().' more html text ';
-$item->fieldInputOverride = '';
-$item->helpText = $langs->transnoentities('AnHelpMessage');
+$item = $formSetup->newItem('CFDI_PAC_PASSWORD');
+$item->nameText = $langs->transnoentities('CfdiPacPassword');
+$item->setAsSecureKey();
+$item->cssClass = 'minwidth300';
 //$item->fieldValue = '';
 //$item->fieldAttr = array() ; // fields attribute only for compatible fields like input text
 //$item->fieldOverride = false; // set this var to override field output will override $fieldInputOverride and $fieldOutputOverride too
@@ -160,7 +113,7 @@ $item->helpText = $langs->transnoentities('AnHelpMessage');
 //$item->fieldOutputOverride = false; // set this var to override field output
 
 
-$setupnotempty =+ count($formSetup->items);
+$setupnotempty += count($formSetup->items);
 
 
 $dirmodels = array_merge(array('/'), (array) $conf->modules_parts['models']);
@@ -277,7 +230,7 @@ if ($action == 'updateMask') {
 // ---------- inicio: handler para subir certificado .cer y llave .key ----------
 if ($action == 'savecert' && $user->admin) {
     // seguridad token opcional
-    if (empty($_REQUEST['token']) || $_REQUEST['token'] !== newToken()) {
+    if (empty($_REQUEST['token']) || $_REQUEST['token'] !== $_SESSION['newtoken']) {
         setEventMessages($langs->trans('ErrorBadToken'), null, 'errors');
     } else {
         $certPsw = GETPOST('cert_psw', 'alpha');
@@ -308,7 +261,7 @@ if ($action == 'savecert' && $user->admin) {
                         header('Location: '.$_SERVER['PHP_SELF']);
                         exit;
                     }
-					chmod($targetDir, 0777); // asegurar permisos
+					chmod($targetDir, 0755);
                 }
 
                 $dstCer = $targetDir.$certName.'.cer';

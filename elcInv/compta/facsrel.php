@@ -44,7 +44,7 @@ $langs->loadLangs(array('companies', 'bills'));
 $id = GETPOST("facid", "int");
 $ref=GETPOST("ref", 'alpha');
 
-$action=$_GET['action'];
+$action = GETPOST('action', 'aZ09');
 
 $limit = GETPOST('limit', 'int')?GETPOST('limit', 'int'):$conf->liste_limit;
 
@@ -71,15 +71,16 @@ $object->fetch_thirdparty();
 $object->info($object->id);
 
 
-if ($action=='delete') {
-  
-    $query= " delete  from ".MAIN_DB_PREFIX."kshinvoice_rel where rowid =".$_GET['fk_facrel'];
-    
+if ($action == 'delete') {
+    $fk_facrel = (int) GETPOST('fk_facrel', 'int');
+    $query = " DELETE FROM ".MAIN_DB_PREFIX."kshinvoice_rel WHERE rowid = ".$fk_facrel;
     $res = $db->query($query);
 }
-if (isset($_POST['actionaddrel'])) {
-    $query= " Insert into ".MAIN_DB_PREFIX."kshinvoice_rel (fk_facture_parent,reltype,uuid) ";
-    $query.=" values ('".$id."','".$_POST['typerelnew']."','". $_POST['uuidnew']."')"; 
+if (GETPOST('actionaddrel', 'alpha')) {
+    $typerelnew = $db->escape(GETPOST('typerelnew', 'alpha'));
+    $uuidnew    = $db->escape(GETPOST('uuidnew', 'alpha'));
+    $query  = " INSERT INTO ".MAIN_DB_PREFIX."kshinvoice_rel (fk_facture_parent, reltype, uuid) ";
+    $query .= " VALUES (".(int)$id.", '".$typerelnew."', '".$uuidnew."')";
     $res = $db->query($query);
 }
 // facturas relacionadas externas
@@ -89,8 +90,13 @@ $queryfacsRel.=" from  ".MAIN_DB_PREFIX."kshinvoice_rel a left join ".MAIN_DB_PR
 $queryfacsRel.=" on a.uuid= b.uuid left join ".MAIN_DB_PREFIX."facture c ";
 $queryfacsRel.=" on b.fk_object=c.rowid ";
 $queryfacsRel.=" where fk_facture_parent='".$id."'";
-$resfacsrel=$db->query($queryfacsRel);
-$objectfacsrel=$resfacsrel->fetch_all(MYSQLI_ASSOC);
+$resfacsrel = $db->query($queryfacsRel);
+$objectfacsrel = array();
+if ($resfacsrel) {
+    while ($row = $db->fetch_object($resfacsrel)) {
+        $objectfacsrel[] = (array) $row;
+    }
+}
 
 $documentstatic=new Contrat($db);
 $documentstaticline=new ContratLigne($db);
@@ -117,7 +123,12 @@ $documentstaticline=new ContratLigne($db);
 
 
 $respessT = $db->query($queryFacs);
-$objpessT = $respessT->fetch_all(MYSQLI_ASSOC);
+$objpessT = array();
+if ($respessT) {
+    while ($row = $db->fetch_object($respessT)) {
+        $objpessT[] = (array) $row;
+    }
+}
 
 $head = facture_prepare_head($object);
 dol_fiche_head($head, 'facsrel', $langs->trans("InvoiceCustomer"), -1, 'bill');
@@ -140,7 +151,12 @@ $morehtmlref .= '<br>' . $langs->trans('ThirdParty') . ' : ' . $object->thirdpar
 //SATKSH
 $query = "SELECT * FROM llx_kshtyperelsat";
 $res = $db->query($query);
-$valselect = $res->fetch_all(MYSQLI_ASSOC);
+$valselect = array();
+if ($res) {
+    while ($row = $db->fetch_object($res)) {
+        $valselect[] = (array) $row;
+    }
+}
 //UUID
 /* relacion */
 $typerelsat = "SELECT   a.ref, b.uuid ";
@@ -150,7 +166,12 @@ $typerelsat .= " where  a.fk_soc='" . $object->socid . "' and b.uuid is not null
 
 
 $restyperelsat = $db->query($typerelsat);
-$objtyperelsat = $restyperelsat->fetch_all(MYSQLI_ASSOC);
+$objtyperelsat = array();
+if ($restyperelsat) {
+    while ($row = $db->fetch_object($restyperelsat)) {
+        $objtyperelsat[] = (array) $row;
+    }
+}
 
 //dol_banner_tab($object, 'socid', $linkback, 0, 'rowid', 'nom', $morehtmlref, '', 0);
 dol_banner_tab($object, 'ref', $linkback, 1, 'ref', 'ref', $morehtmlref, '', 0);

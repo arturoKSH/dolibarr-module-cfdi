@@ -28,10 +28,25 @@ ModuleCfdiDesc = Cfdi description
 CfdiSetup = Cfdi setup
 Settings = Settings
 CfdiSetupPage = Cfdi setup page
-CFDI_MYPARAM1 = My param 1
-CFDI_MYPARAM1Tooltip = My param 1 tooltip
-CFDI_MYPARAM2=My param 2
-CFDI_MYPARAM2Tooltip=My param 2 tooltip
+CfdiPacUser = PAC Username
+CfdiPacPassword = PAC Password
+CFDI_PAC_USER = PAC Username
+CFDI_PAC_PASSWORD = PAC Password
+UploadCertAndKey = Upload Certificate and Key
+CertFile (.cer) = Certificate file (.cer)
+KeyFile (.key) = Key file (.key)
+CertPassword = Certificate password
+FilesSavedOK = Files saved successfully
+CantCreateDir = Cannot create directory
+CantMoveUploadedFiles = Cannot move uploaded files
+InvalidFileType = Invalid file type (accepted: .cer, .pem, .key)
+UploadError = Error uploading file
+MissingFile = Missing certificate or key file
+Timbrar = Stamp CFDI
+ConfirmTimbrar = Do you want to stamp this invoice?
+CancelarCFDI = Cancel CFDI
+ConfirmCancelarCFDI = Do you want to cancel this invoice in the SAT?
+GenerarCFDI = Generate CFDI
 
 
 #

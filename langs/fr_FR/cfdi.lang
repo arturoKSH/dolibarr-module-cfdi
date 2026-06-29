@@ -28,6 +28,25 @@ ModuleCfdiDesc = Description de Cfdi
 CfdiSetup = Configuration du module Cfdi
 Settings = Réglages
 CfdiSetupPage = Page de configuration du module Cfdi
+CfdiPacUser = Utilisateur PAC
+CfdiPacPassword = Mot de passe PAC
+CFDI_PAC_USER = Utilisateur PAC
+CFDI_PAC_PASSWORD = Mot de passe PAC
+UploadCertAndKey = Télécharger le certificat et la clé
+CertFile (.cer) = Fichier certificat (.cer)
+KeyFile (.key) = Fichier clé (.key)
+CertPassword = Mot de passe du certificat
+FilesSavedOK = Fichiers sauvegardés avec succès
+CantCreateDir = Impossible de créer le répertoire
+CantMoveUploadedFiles = Impossible de déplacer les fichiers téléchargés
+InvalidFileType = Type de fichier invalide (accepté : .cer, .pem, .key)
+UploadError = Erreur lors du téléchargement
+MissingFile = Fichier certificat ou clé manquant
+Timbrar = Tamponner CFDI
+ConfirmTimbrar = Voulez-vous tamponner cette facture ?
+CancelarCFDI = Annuler CFDI
+ConfirmCancelarCFDI = Voulez-vous annuler cette facture au SAT ?
+GenerarCFDI = Générer CFDI
 
 #
 # Page À propos

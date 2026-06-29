@@ -395,10 +395,10 @@ class InterfaceMyTrigger extends DolibarrTriggers
     }
 
     public function parciality($object){
-       $sql = "SELECT COUNT(*) as num, c.rowid FROM ".MAIN_DB_PREFIX."paiement a 
-        INNER JOIN ".MAIN_DB_PREFIX."paiement_facture b ON a.rowid = b.fk_paiement 
-        INNER JOIN ".MAIN_DB_PREFIX."facture c ON b.fk_facture = c.rowid 
-        WHERE c.rowid = (SELECT fk_facture FROM ".MAIN_DB_PREFIX."paiement_facture WHERE fk_paiement = " . $object->id . ") 
+       $sql = "SELECT COUNT(*) as num, c.rowid FROM ".MAIN_DB_PREFIX."paiement a
+        INNER JOIN ".MAIN_DB_PREFIX."paiement_facture b ON a.rowid = b.fk_paiement
+        INNER JOIN ".MAIN_DB_PREFIX."facture c ON b.fk_facture = c.rowid
+        WHERE c.rowid = (SELECT fk_facture FROM ".MAIN_DB_PREFIX."paiement_facture WHERE fk_paiement = " . (int) $object->id . ")
          GROUP BY c.rowid";
         try {
           //sr
@@ -408,17 +408,17 @@ class InterfaceMyTrigger extends DolibarrTriggers
                     if($objp->num == 0){
                         $object->num_paiement = 1;
                         $sql1 = "UPDATE ".MAIN_DB_PREFIX."paiement_facture SET num_parcial = 1
-                                WHERE fk_paiement = " . $object->id .
-                                " AND fk_facture = " . $objp->rowid; 
+                                WHERE fk_paiement = " . (int) $object->id .
+                                " AND fk_facture = " . (int) $objp->rowid;
                         $resql1 =  $this->db->query($sql1);
 
                     }else{
                         $numpartial = $objp->num;
                         // $object->num_paiement = $numpartial;
 
-                        $sqln = "UPDATE ".MAIN_DB_PREFIX."paiement_facture SET num_parcial = " . $numpartial . "
-                                WHERE fk_paiement = " . $object->id.
-                                " AND fk_facture = " . $objp->rowid; 
+                        $sqln = "UPDATE ".MAIN_DB_PREFIX."paiement_facture SET num_parcial = " . (int) $numpartial . "
+                                WHERE fk_paiement = " . (int) $object->id .
+                                " AND fk_facture = " . (int) $objp->rowid;
                         $resqln =  $this->db->query($sqln);
                     }
                 }
@@ -444,13 +444,13 @@ class InterfaceMyTrigger extends DolibarrTriggers
             $sql = "SELECT fac.rowid
                                 FROM llx_facture_fourn fac
                                     INNER JOIN llx_paiementfourn_facturefourn pf ON pf.fk_facturefourn = fac.rowid
-                                WHERE pf.fk_paiementfourn = ". $object->id ."
+                                WHERE pf.fk_paiementfourn = " . (int) $object->id . "
                                 group by fac.rowid";
-        }else if($object->element == "payment"){
+        } else if ($object->element == "payment") {
             $sql = "SELECT fac.rowid
                         FROM llx_facture fac
                             INNER JOIN llx_paiement_facture pf ON pf.fk_facture = fac.rowid
-                        WHERE pf.fk_paiement = ". $object->id ."
+                        WHERE pf.fk_paiement = " . (int) $object->id . "
                         group by fac.rowid";
         }
         
@@ -458,16 +458,16 @@ class InterfaceMyTrigger extends DolibarrTriggers
         while($objp = $this->db->fetch_object($resql)){
 
             //Buscar la cantidad pagada en todos los pagos, para sacar los centavos de diferencia
-            if ($object->element == "payment_supplier"){
+            if ($object->element == "payment_supplier") {
                 $sql = "SELECT ABS(multicurrency_total_ttc - SUM(pf.multicurrency_amount)) as resta
-							FROM llx_facture_fourn ff
-								INNER JOIN llx_paiementfourn_facturefourn pf ON pf.fk_facturefourn = ff.rowid
-							WHERE ff.rowid = " . $objp->rowid;
-            } else if ($object->element == "payment"){
+                            FROM llx_facture_fourn ff
+                                INNER JOIN llx_paiementfourn_facturefourn pf ON pf.fk_facturefourn = ff.rowid
+                            WHERE ff.rowid = " . (int) $objp->rowid;
+            } else if ($object->element == "payment") {
                 $sql = "SELECT ABS(multicurrency_total_ttc - SUM(pf.multicurrency_amount)) as resta
                             FROM llx_facture fac
                                 INNER JOIN llx_paiement_facture pf ON pf.fk_facture = fac.rowid
-                            WHERE fac.rowid = " . $objp->rowid;
+                            WHERE fac.rowid = " . (int) $objp->rowid;
             }
             
             $resql =  $this->db->query($sql);
@@ -477,19 +477,19 @@ class InterfaceMyTrigger extends DolibarrTriggers
             if(abs($objjep->resta) <= $conf->global->MAIN_INFO_RND_AMT_CUST){
                 
                 //Obtener el ultimo pago y su monto pagado
-                if($object->element == "payment_supplier"){
+                if ($object->element == "payment_supplier") {
                     $ffsql = "SELECT pf.rowid as id, pf.amount as amount
                         FROM llx_facture_fourn fac
                             INNER JOIN llx_paiementfourn_facturefourn pf ON pf.fk_facturefourn = fac.rowid
                             JOIN llx_paiementfourn pa ON pf.fk_paiementfourn = pa.rowid
-                        WHERE fac.rowid = " . $objp->rowid . " 
+                        WHERE fac.rowid = " . (int) $objp->rowid . "
                         ORDER BY pa.datec DESC LIMIT 1";
-                } else if ($object->element == "payment"){
+                } else if ($object->element == "payment") {
                     $ffsql = "SELECT pf.rowid as id, pf.amount as amount
                         FROM llx_facture fac
                             INNER JOIN llx_paiement_facture pf ON pf.fk_facture = fac.rowid
                             JOIN llx_paiement pa ON pf.fk_paiement = pa.rowid
-                        WHERE fac.rowid = " . $objp->rowid . " 
+                        WHERE fac.rowid = " . (int) $objp->rowid . "
                         ORDER BY pa.datec DESC LIMIT 1";
                 }
                 
@@ -501,13 +501,12 @@ class InterfaceMyTrigger extends DolibarrTriggers
                 $payDiff = $objjep->resta + $ffamount;
                 
                 //Actualizar la cantidad del ultimo pago
-                if($object->element == "payment_supplier"){
-                    $updtsql = "UPDATE llx_paiementfourn_facturefourn SET amount = " . $payDiff ;
-                    $updtsql .= " WHERE rowid = " . $ffpayId;
-                    // echo $updtsql;
-                } else if ($object->element == "payment"){
-                    $updtsql = "UPDATE llx_paiement_facture SET amount = " . $payDiff ;
-                    $updtsql .= " WHERE rowid = " . $ffpayId;
+                if ($object->element == "payment_supplier") {
+                    $updtsql  = "UPDATE llx_paiementfourn_facturefourn SET amount = " . (float) $payDiff;
+                    $updtsql .= " WHERE rowid = " . (int) $ffpayId;
+                } else if ($object->element == "payment") {
+                    $updtsql  = "UPDATE llx_paiement_facture SET amount = " . (float) $payDiff;
+                    $updtsql .= " WHERE rowid = " . (int) $ffpayId;
                 }
                 $updtresql =  $this->db->query($updtsql);
             } 

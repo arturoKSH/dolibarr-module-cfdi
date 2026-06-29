@@ -42,8 +42,10 @@
     // new SoapHeader("https://cfdi.timbrado.com.mx/timbradov2", "AuthenticationHeader", $auten));
    
     /**Procedimiento para versiones > a php 8.0 */
-    // $auten = array('UserName' => 'crasa_t', 'Password' => '2x!D-Bf9Ln6=$Gp4');//produccion
-    $auten = array('UserName' => 'autofac_t', 'Password' => '6Pj!N+5sbQ$4=t8Y');    
+    $auten = array(
+        'UserName' => !empty($conf->global->CFDI_PAC_USER)     ? $conf->global->CFDI_PAC_USER     : '',
+        'Password' => !empty($conf->global->CFDI_PAC_PASSWORD) ? $conf->global->CFDI_PAC_PASSWORD : '',
+    );
     $params = array('minOccurs'=>'0', 'maxOccurs'=>'1', 'cfdiBytes' => $sData, 'type'=>'s:base64Binary');
     try {
       $header = new SoapHeader(
