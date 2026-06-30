@@ -121,18 +121,22 @@ $item->fieldOutputOverride = ($currentEnv === 'prod') ? 'Producción' : 'Pruebas
 $item = $formSetup->newItem('CFDI_STAMP_URL_TEST');
 $item->nameText = 'URL timbrado (Pruebas)';
 $item->cssClass = 'minwidth500';
+$item->fieldAttr = array('placeholder' => 'https://develop.timbrado.com.mx/wsTimbrado.asmx?WSDL');
 
 $item = $formSetup->newItem('CFDI_STAMP_URL_PROD');
 $item->nameText = 'URL timbrado (Producción)';
 $item->cssClass = 'minwidth500';
+$item->fieldAttr = array('placeholder' => 'https://cfdi33.timbrado.com.mx/wsTimbrado.asmx?WSDL');
 
 $item = $formSetup->newItem('CFDI_CANCEL_URL_TEST');
 $item->nameText = 'URL cancelación (Pruebas)';
 $item->cssClass = 'minwidth500';
+$item->fieldAttr = array('placeholder' => 'https://develop.timbrado.com.mx/CancelacionServices/CancelacionServices.asmx?WSDL');
 
 $item = $formSetup->newItem('CFDI_CANCEL_URL_PROD');
 $item->nameText = 'URL cancelación (Producción)';
 $item->cssClass = 'minwidth500';
+$item->fieldAttr = array('placeholder' => 'https://cfdi.timbrado.com.mx/CancelacionServices/CancelacionServices.asmx?WSDL');
 
 
 $setupnotempty += count($formSetup->items);

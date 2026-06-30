@@ -39,7 +39,10 @@ function CancelaCfdi($db, $ruta)
         //     new SoapHeader("https://cfdi.timbrado.com.mx/cancelaservices", "AuthenticationHeader", $auten2)//version anterior
         // );
 
-        $auten = array('UserName' => 'crasa_t', 'Password' => '2x!D-Bf9Ln6=$Gp4');
+        $auten = array(
+            'UserName' => !empty($conf->global->CFDI_PAC_USER)     ? $conf->global->CFDI_PAC_USER     : '',
+            'Password' => !empty($conf->global->CFDI_PAC_PASSWORD) ? $conf->global->CFDI_PAC_PASSWORD : '',
+        );
         $params2 = array('minOccurs' => '0', 'maxOccurs' => '1', 'xmlBytes' => $sData, 'type' => 's:base64Binary');
 
         $header = new SoapHeader(
@@ -123,7 +126,10 @@ function AcepRechazoCfdi($db, $ruta)
     $client = new SoapClient($cancelUrl, array('trace' => 1));
 
     try {
-        $auten = array('UserName' => 'autofac_t', 'Password' => '6Pj!N+5sbQ$4=t8Y');
+        $auten = array(
+            'UserName' => !empty($conf->global->CFDI_PAC_USER)     ? $conf->global->CFDI_PAC_USER     : '',
+            'Password' => !empty($conf->global->CFDI_PAC_PASSWORD) ? $conf->global->CFDI_PAC_PASSWORD : '',
+        );
         $params = array('minOccurs' => '0', 'maxOccurs' => '1', 'xmlBytes' => $sData, 'type' => 's:base64Binary');
         /* Namespace */
         $result = $client->__Call(
@@ -190,7 +196,10 @@ function RelacionadosCfdi($db, $ruta)
     $client = new SoapClient($cancelUrl, array('trace' => 1));
 
     try {
-        $auten = array('UserName' => 'autofac_t', 'Password' => '6Pj!N+5sbQ$4=t8Y');
+        $auten = array(
+            'UserName' => !empty($conf->global->CFDI_PAC_USER)     ? $conf->global->CFDI_PAC_USER     : '',
+            'Password' => !empty($conf->global->CFDI_PAC_PASSWORD) ? $conf->global->CFDI_PAC_PASSWORD : '',
+        );
         $params = array('minOccurs' => '0', 'maxOccurs' => '1', 'xmlBytes' => $sData, 'type' => 's:base64Binary');
         /* Namespace */
         $result = $client->__Call(
@@ -237,7 +246,10 @@ function statusCFDI($db,$rfc){
 
 
     try {
-        $auten =  array('UserName' => 'crasa_t', 'Password' => '2x!D-Bf9Ln6=$Gp4');
+        $auten = array(
+            'UserName' => !empty($conf->global->CFDI_PAC_USER)     ? $conf->global->CFDI_PAC_USER     : '',
+            'Password' => !empty($conf->global->CFDI_PAC_PASSWORD) ? $conf->global->CFDI_PAC_PASSWORD : '',
+        );
 
         $params = array('minOccurs' => '0', 'maxOccurs' => '1', 'rfcReceptor' => $rfc, 'type' => 's:string');
         /* Namespace */

@@ -70,13 +70,46 @@ print dol_get_fiche_head($head, 'test', $langs->trans($page_name), -1, "cfdi@cfd
 print '<h3>Diagnóstico del Módulo CFDI</h3>';
 print '<p class="opacitymedium">Verifica que las tablas de catálogo y los extrafields requeridos estén correctamente instalados.</p>';
 
+// ─── Configuración actual ────────────────────────────────────────────────────
+
+$currentEnv   = !empty($conf->global->CFDI_ENV) ? $conf->global->CFDI_ENV : 'test';
+$stampUrlTest = !empty($conf->global->CFDI_STAMP_URL_TEST) ? $conf->global->CFDI_STAMP_URL_TEST : '<em class="opacitymedium">default: develop.timbrado.com.mx</em>';
+$stampUrlProd = !empty($conf->global->CFDI_STAMP_URL_PROD) ? $conf->global->CFDI_STAMP_URL_PROD : '<em class="opacitymedium">default: cfdi33.timbrado.com.mx</em>';
+$cancelUrlTest = !empty($conf->global->CFDI_CANCEL_URL_TEST) ? $conf->global->CFDI_CANCEL_URL_TEST : '<em class="opacitymedium">default: develop.timbrado.com.mx</em>';
+$cancelUrlProd = !empty($conf->global->CFDI_CANCEL_URL_PROD) ? $conf->global->CFDI_CANCEL_URL_PROD : '<em class="opacitymedium">default: cfdi.timbrado.com.mx</em>';
+$pacUser       = !empty($conf->global->CFDI_PAC_USER) ? dol_escape_htmltag($conf->global->CFDI_PAC_USER) : '<span style="color:red">No configurado</span>';
+$hasCert       = !empty($conf->global->MAIN_INFO_CFDI_CERT_NAME);
+
+$envLabel = ($currentEnv === 'prod')
+    ? '<span style="color:#c8000a;font-weight:bold">Producción</span>'
+    : '<span style="color:#0063cb;font-weight:bold">Pruebas (Test)</span>';
+
+print '<h4>Configuración Actual</h4>';
+print '<table class="noborder centpercent">';
+print '<tr class="oddeven"><td width="220">Ambiente activo</td><td>'.$envLabel.'</td></tr>';
+print '<tr class="oddeven"><td>URL timbrado activa</td><td>'.($currentEnv === 'prod' ? $stampUrlProd : $stampUrlTest).'</td></tr>';
+print '<tr class="oddeven"><td>URL cancelación activa</td><td>'.($currentEnv === 'prod' ? $cancelUrlProd : $cancelUrlTest).'</td></tr>';
+print '<tr class="oddeven"><td>Usuario PAC</td><td>'.$pacUser.'</td></tr>';
+print '<tr class="oddeven"><td>Certificado digital</td><td>';
+if ($hasCert) {
+    print '<span class="fa fa-check" style="color:green"></span> '.dol_escape_htmltag($conf->global->MAIN_INFO_CFDI_CERT_NAME);
+} else {
+    print '<span class="fa fa-times" style="color:red"></span> <span style="color:red">No configurado</span>';
+}
+print '</td></tr>';
+print '</table>';
+print '<br>';
+
 // ─── Tablas de catálogo ─────────────────────────────────────────────────────
 
 $catalogTables = array(
-	'llx_usocfdi'       => 'Usos de CFDI (SAT)',
-	'llx_FiscalRegimen' => 'Regímenes Fiscales',
-	'llx_kshtyperelsat' => 'Tipos de Relación SAT',
-	'llx_serie'         => 'Series de Folio',
+	'llx_usocfdi'                => 'Usos de CFDI (SAT)',
+	'llx_FiscalRegimen'          => 'Regímenes Fiscales',
+	'llx_kshtyperelsat'          => 'Tipos de Relación SAT',
+	'llx_serie'                  => 'Series de Folio',
+	'llx_kshCancelcfdi'          => 'Cancelaciones registradas',
+	'llx_kshacceptordeclinecfdi' => 'Aceptaciones / Rechazos',
+	'llx_kshcfdirelations'       => 'CFDIs relacionados',
 );
 
 print '<h4>Tablas de Catálogo</h4>';
