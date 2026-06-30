@@ -6,8 +6,8 @@
  * and open the template in the editor.
  */
 
-$certName = $conf->global->MAIN_INFO_CFDI_CERT_NAME;
-$certPsw = $conf->global->MAIN_INFO_CFDI_CERT_PSW;
+$certName = getDolGlobalString('MAIN_INFO_CFDI_CERT_NAME');
+$certPsw  = getDolGlobalString('MAIN_INFO_CFDI_CERT_PSW');
 $localPht = DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/';
 $xlst = "/xslt/origStr40.xslt";
 
@@ -17,27 +17,32 @@ updCertNum($localPht, $certName);
 
 function updCertVal($localPht,$certName)
 {
-    shell_exec("openssl x509 -inform DER -in ".$localPht.$certName."/".$certName.".cer  > ".$localPht.$certName."/Cert.txt");
-    
-    $archivo = fopen($localPht.$certName."/Cert.txt",'r');
-    $fileLgh = filesize($localPht.$certName."/Cert.txt");
-    if(filesize($localPht.$certName."/Cert.txt") >0)
-        $val = fread($archivo, $fileLgh);
-    
+    $txtPath = $localPht.$certName."/Cert.txt";
+    shell_exec("openssl x509 -inform DER -in ".$localPht.$certName."/".$certName.".cer  > ".$txtPath);
+
+    if (!file_exists($txtPath) || filesize($txtPath) == 0) return;
+
+    $archivo = fopen($txtPath,'r');
+    $fileLgh = filesize($txtPath);
+    $val = fread($archivo, $fileLgh);
+    fclose($archivo);
+
     $val = str_replace("-----BEGIN CERTIFICATE-----", "", $val);
     $val = str_replace("-----END CERTIFICATE-----", "", $val);
     $val = trim($val);
-    //$val = mberegi_replace("[\n|\r|\n\r|\t|\|\x0B]", "",$val);
-    fclose($archivo);   
     updValConst('MAIN_INFO_CFDI_CERT_VAL',$val);
 }
 
 function updCertNum($localPht,$certName)
 {
-    shell_exec("openssl x509 -inform DER -in ".$localPht.$certName."/".$certName.".cer -noout -serial > ".$localPht.$certName."/Serial.txt");
-    $archivo = fopen($localPht.$certName."/Serial.txt",'r');
+    $txtPath = $localPht.$certName."/Serial.txt";
+    shell_exec("openssl x509 -inform DER -in ".$localPht.$certName."/".$certName.".cer -noout -serial > ".$txtPath);
+
+    if (!file_exists($txtPath) || filesize($txtPath) == 0) return;
+
+    $archivo = fopen($txtPath,'r');
     $val = fgets($archivo);
-    fclose($archivo);  
+    fclose($archivo);
     $val = str_replace("serial=", "", $val);    
     $val2 = "";
     for ($i = 0;$i< strlen($val);$i++)
@@ -102,20 +107,19 @@ echo " nesrc ".$status;
     //return $localPht.$certName."/".$certName;   
 }
 function stampStr($localPht, $certName, $orgStr)
-{       
-    $keyPem =$localPht.$certName."/".$certName.".key.pem";
+{
+    $keyPem = $localPht.$certName."/".$certName.".key.pem";
+
+    if (!file_exists($keyPem)) return '';
 
     $fp = fopen($keyPem, "r");
     $priv_key = fread($fp, 8192);
     fclose($fp);
     $pkeyid = openssl_get_privatekey($priv_key);
 
-    // computar la firma
     $firma = "";
     openssl_sign($orgStr, $firma, $pkeyid, OPENSSL_ALGO_SHA256);
     $linea = base64_encode($firma);
-    // liberar la clave de la memoria
-    openssl_free_key($pkeyid);
 
     return $linea;
 }

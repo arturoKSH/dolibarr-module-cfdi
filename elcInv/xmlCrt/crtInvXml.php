@@ -4,6 +4,11 @@
 include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/xmlCrt/stampCfdi.php'); //ehm
 include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/dbExc/excFetch.php'); //ehm
 
+if (empty($certName)) {
+    setEventMessages('Certificado SAT no configurado. Suba el .cer y .key en CFDI > Configuración.', null, 'errors');
+    return;
+}
+
 $search  = array('-', ',');
 $replace = array('', '');
 
@@ -373,9 +378,9 @@ $linea = stampStr($localPht, $certName, $orgStr);
 
 //openssl.exe x509 -inform DER -in "aaa010101aaa_CSD_01.cer" > "Cert.txt"
 
-if (!file_exists($ruta))
-{    
-    mkdir(DOL_DATA_ROOT."/facture/".$object->ref."/");
+$dir = DOL_DATA_ROOT."/facture/".$object->ref."/";
+if (!is_dir($dir)) {
+    mkdir($dir, 0755, true);
 }
 
 $Sello=$xml->createAttribute('Sello');
@@ -388,7 +393,7 @@ $ruta=DOL_DATA_ROOT."/facture/".$object->ref."/".$object->ref.".xml";
 $xml->save($ruta);
     
 $update = "UPDATE ".MAIN_DB_PREFIX."facture_extrafields SET";
-$update.= "  stampcfdi = '". $cadenaOriginal."'";	
+$update.= "  stampcfdi = '". $db->escape($orgStr)."'";
 $update.= " WHERE fk_object = ".$id;
 $up=$db->query($update);
 

@@ -107,18 +107,24 @@ class ActionsCfdi
 				$this->buildCFDI($object);
 			}else if($action == 'confirm_timbre'){
 				// do timbre in SAT
-			
+
 				$result = $this->stampCfdi($object);
 				if($result == 1){ //condicion de que si se cumple el timbrado
-					require_once DOL_DOCUMENT_ROOT."/custom/createevents/events.class.php";
-					$actioncomm = new events($db);
-					$actioncomm->createActionBillTimbre($user, $object);
+					$eventsFile = DOL_DOCUMENT_ROOT."/custom/createevents/events.class.php";
+					if (file_exists($eventsFile)) {
+						require_once $eventsFile;
+						$actioncomm = new events($db);
+						$actioncomm->createActionBillTimbre($user, $object);
+					}
 				}
-				
+
 			}else if($action == 'confirm_CancelSat' && GETPOST('confirm', 'alpha') == 'yes' ){
-				require_once DOL_DOCUMENT_ROOT."/custom/createevents/events.class.php";
-				$actioncomm = new events($db);
-				$actioncomm->createActionBillCancel($user, $object);
+				$eventsFile = DOL_DOCUMENT_ROOT."/custom/createevents/events.class.php";
+				if (file_exists($eventsFile)) {
+					require_once $eventsFile;
+					$actioncomm = new events($db);
+					$actioncomm->createActionBillCancel($user, $object);
+				}
 				$this->buildCFDICancel($object,$action);
 			}
 			

@@ -2,7 +2,8 @@
 /* echo DOL_DATA_ROOT."/facture/".$object->ref."/".$object->ref.".xml";*/
   $fname = DOL_DATA_ROOT."/facture/".$object->ref."/".$object->ref.".xml";
   if(!file_exists($fname)){
-    die(PHP_EOL . "File not found" . PHP_EOL . PHP_EOL);
+    setEventMessages('XML CFDI no encontrado. Primero genere el CFDI con el botón "Generar CFDI".', null, 'errors');
+    return;
   }
 
   $handle = fopen($fname, "r");

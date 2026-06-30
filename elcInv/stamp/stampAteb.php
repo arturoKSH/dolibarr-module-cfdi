@@ -62,15 +62,24 @@ if($action == 'confirm_CancelSat' && $confirm == 'yes'){
                         
         $uuidRpl = $uuid;
         //$credentials = new Credentials(DOL_DOCUMENT_ROOT.'/elcInv/abc/abc.cer.pem',DOL_DOCUMENT_ROOT.'/elcInv/abc/abc.key.pem','Blgstcscv89');
-        $certName = $conf->global->MAIN_INFO_CFDI_CERT_NAME;
-        $certPsw  = $conf->global->MAIN_INFO_CFDI_CERT_PSW;
+        $certName = getDolGlobalString('MAIN_INFO_CFDI_CERT_NAME');
+        $certPsw  = getDolGlobalString('MAIN_INFO_CFDI_CERT_PSW');
 
         $localPht = DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/'.$certName.'/';
 
+        $cerPem = $localPht.$certName.'.cer.pem';
+        $keyPem = $localPht.$certName.'.key.pem';
+
+        if (empty($certName) || !file_exists($cerPem) || !file_exists($keyPem)) {
+            setEventMessages('Certificados SAT no encontrados. Suba el .cer y .key en CFDI > Configuración.', null, 'errors');
+            $action = '';
+            return;
+        }
+
         $credentials = new Credentials(
-                $localPht.$certName.'.cer.pem',   // Ruta al CER PEM
-                $localPht.$certName.'.key.pem',   // Ruta al KEY PEM
-                $certPsw                           // Contraseña correcta
+                $cerPem,  // Ruta al CER PEM
+                $keyPem,  // Ruta al KEY PEM
+                $certPsw  // Contraseña correcta
             );
         $dataCancelCfdi = new Cancellation($RfcEmisor, [$uuid], new DateTimeImmutable(), $reason, $uuidRpl);
         $rutaCancelCfdi=DOL_DATA_ROOT."/facture/".$object->ref."/".$object->ref."-SolicitudCancel.xml";
