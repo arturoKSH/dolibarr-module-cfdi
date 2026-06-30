@@ -21,12 +21,10 @@
 
   try
   {  
-      // $client = new SoapClient("http://201.144.64.67:81/wsTimbrado.asmx?WSDL" , array('trace' => 1));
-      // echo 'oooo';
-   $client = new SoapClient("https://develop.timbrado.com.mx/wsTimbrado.asmx?WSDL" , array('trace' => 1));//pruebas
-  
-  //$client = new SoapClient("https://cfdi33.timbrado.com.mx/wsTimbrado.asmx?WSDL" , array('trace' => 1));https://cfdi33.drptimbrado.com.mx/wsTimbrado.asmx
-  //$client = new SoapClient("https://cfdi33.timbrado.com.mx/wsTimbrado.asmx?WSDL" , array('trace' => 1));//produccion
+      $stampUrlTest = !empty($conf->global->CFDI_STAMP_URL_TEST) ? $conf->global->CFDI_STAMP_URL_TEST : 'https://develop.timbrado.com.mx/wsTimbrado.asmx?WSDL';
+      $stampUrlProd = !empty($conf->global->CFDI_STAMP_URL_PROD) ? $conf->global->CFDI_STAMP_URL_PROD : 'https://cfdi33.timbrado.com.mx/wsTimbrado.asmx?WSDL';
+      $stampUrl = (!empty($conf->global->CFDI_ENV) && $conf->global->CFDI_ENV === 'prod') ? $stampUrlProd : $stampUrlTest;
+      $client = new SoapClient($stampUrl, array('trace' => 1));
   
 } catch (SoapFault $fault) {
   

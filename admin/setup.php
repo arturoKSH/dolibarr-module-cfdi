@@ -106,11 +106,33 @@ $item = $formSetup->newItem('CFDI_PAC_PASSWORD');
 $item->nameText = $langs->transnoentities('CfdiPacPassword');
 $item->setAsSecureKey();
 $item->cssClass = 'minwidth300';
-//$item->fieldValue = '';
-//$item->fieldAttr = array() ; // fields attribute only for compatible fields like input text
-//$item->fieldOverride = false; // set this var to override field output will override $fieldInputOverride and $fieldOutputOverride too
-//$item->fieldInputOverride = false; // set this var to override field input
-//$item->fieldOutputOverride = false; // set this var to override field output
+
+// Ambiente de timbrado
+$currentEnv = !empty($conf->global->CFDI_ENV) ? $conf->global->CFDI_ENV : 'test';
+$item = $formSetup->newItem('CFDI_ENV');
+$item->nameText = 'Ambiente de timbrado';
+$selectHtml  = '<select name="CFDI_ENV" class="flat minwidth200">';
+$selectHtml .= '<option value="test"'.($currentEnv === 'test' ? ' selected' : '').'>Pruebas (Test)</option>';
+$selectHtml .= '<option value="prod"'.($currentEnv === 'prod' ? ' selected' : '').'>Producción</option>';
+$selectHtml .= '</select>';
+$item->fieldInputOverride  = $selectHtml;
+$item->fieldOutputOverride = ($currentEnv === 'prod') ? 'Producción' : 'Pruebas (Test)';
+
+$item = $formSetup->newItem('CFDI_STAMP_URL_TEST');
+$item->nameText = 'URL timbrado (Pruebas)';
+$item->cssClass = 'minwidth500';
+
+$item = $formSetup->newItem('CFDI_STAMP_URL_PROD');
+$item->nameText = 'URL timbrado (Producción)';
+$item->cssClass = 'minwidth500';
+
+$item = $formSetup->newItem('CFDI_CANCEL_URL_TEST');
+$item->nameText = 'URL cancelación (Pruebas)';
+$item->cssClass = 'minwidth500';
+
+$item = $formSetup->newItem('CFDI_CANCEL_URL_PROD');
+$item->nameText = 'URL cancelación (Producción)';
+$item->cssClass = 'minwidth500';
 
 
 $setupnotempty += count($formSetup->items);

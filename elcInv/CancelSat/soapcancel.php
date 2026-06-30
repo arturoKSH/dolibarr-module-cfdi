@@ -1,7 +1,8 @@
 <?php
 function CancelaCfdi($db, $ruta)
 {
-    
+    global $conf;
+
     $fname = $ruta;
     if (!file_exists($fname)) {
         die(PHP_EOL . "File not found" . PHP_EOL . PHP_EOL);
@@ -15,14 +16,15 @@ function CancelaCfdi($db, $ruta)
     fclose($handle);
 
     $b64 = base64_encode($sData);
-    
-   
+
+    $cancelUrlTest = !empty($conf->global->CFDI_CANCEL_URL_TEST) ? $conf->global->CFDI_CANCEL_URL_TEST : 'https://develop.timbrado.com.mx/CancelacionServices/CancelacionServices.asmx?WSDL';
+    $cancelUrlProd = !empty($conf->global->CFDI_CANCEL_URL_PROD) ? $conf->global->CFDI_CANCEL_URL_PROD : 'https://cfdi.timbrado.com.mx/CancelacionServices/CancelacionServices.asmx?WSDL';
+    $cancelUrl = (!empty($conf->global->CFDI_ENV) && $conf->global->CFDI_ENV === 'prod') ? $cancelUrlProd : $cancelUrlTest;
 
     try {
-       
-        
+
         ini_set("soap.wsdl_cache_enabled", "0");
-        $client2 = new SoapClient("https://cfdi.timbrado.com.mx/CancelacionServices/CancelacionServices.asmx?WSDL", array('trace' => 1));
+        $client2 = new SoapClient($cancelUrl, array('trace' => 1));
         //$client2 = new SoapClient("http://201.144.64.67:81/CancelacionServicesNew/CancelacionServices.asmx?WSDL", array('trace' => 1));
         
         //$auten2 = array('UserName' => 'crasa_t', 'Password' => '2x!D-Bf9Ln6=$Gp4');
@@ -96,6 +98,8 @@ function CancelaCfdi($db, $ruta)
 
 function AcepRechazoCfdi($db, $ruta)
 {
+    global $conf;
+
     $fname = $ruta;
     if (!file_exists($fname)) {
         die(PHP_EOL . "File not found" . PHP_EOL . PHP_EOL);
@@ -110,9 +114,13 @@ function AcepRechazoCfdi($db, $ruta)
 
     $b64 = base64_encode($sData);
 
+    $cancelUrlTest = !empty($conf->global->CFDI_CANCEL_URL_TEST) ? $conf->global->CFDI_CANCEL_URL_TEST : 'https://develop.timbrado.com.mx/CancelacionServices/CancelacionServices.asmx?WSDL';
+    $cancelUrlProd = !empty($conf->global->CFDI_CANCEL_URL_PROD) ? $conf->global->CFDI_CANCEL_URL_PROD : 'https://cfdi.timbrado.com.mx/CancelacionServices/CancelacionServices.asmx?WSDL';
+    $cancelUrl = (!empty($conf->global->CFDI_ENV) && $conf->global->CFDI_ENV === 'prod') ? $cancelUrlProd : $cancelUrlTest;
+
     ini_set("soap.wsdl_cache_enabled", "0");
 
-    $client = new SoapClient("https://cfdi.timbrado.com.mx/CancelacionServices/CancelacionServices.asmx?WSDL", array('trace' => 1));
+    $client = new SoapClient($cancelUrl, array('trace' => 1));
 
     try {
         $auten = array('UserName' => 'autofac_t', 'Password' => '6Pj!N+5sbQ$4=t8Y');
@@ -156,6 +164,7 @@ function AcepRechazoCfdi($db, $ruta)
 
 function RelacionadosCfdi($db, $ruta)
 {
+    global $conf;
 
     $fname = $ruta;
     if (!file_exists($fname)) {
@@ -172,9 +181,13 @@ function RelacionadosCfdi($db, $ruta)
 
     $b64 = base64_encode($sData);
 
+    $cancelUrlTest = !empty($conf->global->CFDI_CANCEL_URL_TEST) ? $conf->global->CFDI_CANCEL_URL_TEST : 'https://develop.timbrado.com.mx/CancelacionServices/CancelacionServices.asmx?WSDL';
+    $cancelUrlProd = !empty($conf->global->CFDI_CANCEL_URL_PROD) ? $conf->global->CFDI_CANCEL_URL_PROD : 'https://cfdi.timbrado.com.mx/CancelacionServices/CancelacionServices.asmx?WSDL';
+    $cancelUrl = (!empty($conf->global->CFDI_ENV) && $conf->global->CFDI_ENV === 'prod') ? $cancelUrlProd : $cancelUrlTest;
+
     ini_set("soap.wsdl_cache_enabled", "0");
 
-    $client = new SoapClient("https://cfdi.timbrado.com.mx/CancelacionServices/CancelacionServices.asmx?WSDL", array('trace' => 1));
+    $client = new SoapClient($cancelUrl, array('trace' => 1));
 
     try {
         $auten = array('UserName' => 'autofac_t', 'Password' => '6Pj!N+5sbQ$4=t8Y');
@@ -212,18 +225,23 @@ function RelacionadosCfdi($db, $ruta)
     }
 }
 function statusCFDI($db,$rfc){
+    global $conf;
+
+    $cancelUrlTest = !empty($conf->global->CFDI_CANCEL_URL_TEST) ? $conf->global->CFDI_CANCEL_URL_TEST : 'https://develop.timbrado.com.mx/CancelacionServices/CancelacionServices.asmx?WSDL';
+    $cancelUrlProd = !empty($conf->global->CFDI_CANCEL_URL_PROD) ? $conf->global->CFDI_CANCEL_URL_PROD : 'https://cfdi.timbrado.com.mx/CancelacionServices/CancelacionServices.asmx?WSDL';
+    $cancelUrl = (!empty($conf->global->CFDI_ENV) && $conf->global->CFDI_ENV === 'prod') ? $cancelUrlProd : $cancelUrlTest;
 
     ini_set("soap.wsdl_cache_enabled", "0");
 
-    $client2 = new SoapClient("https://cfdi.timbrado.com.mx/CancelacionServices/CancelacionServices.asmx?WSDL", array('trace' => 1));
-        
+    $client2 = new SoapClient($cancelUrl, array('trace' => 1));
+
 
     try {
         $auten =  array('UserName' => 'crasa_t', 'Password' => '2x!D-Bf9Ln6=$Gp4');
 
         $params = array('minOccurs' => '0', 'maxOccurs' => '1', 'rfcReceptor' => $rfc, 'type' => 's:string');
         /* Namespace */
-        $result = $client->__Call(
+        $result = $client2->__Call(
             'PeticionesPendientes',
             array('rfcReceptor' => $params),
             null,

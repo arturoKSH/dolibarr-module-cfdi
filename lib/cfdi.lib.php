@@ -60,6 +60,11 @@ function cfdiAdminPrepareHead()
 	$head[$h][2] = 'about';
 	$h++;
 
+	$head[$h][0] = dol_buildpath("/cfdi/admin/test.php", 1);
+	$head[$h][1] = 'Diagnóstico';
+	$head[$h][2] = 'test';
+	$h++;
+
 	// Show more tabs from modules
 	// Entries must be declared in modules descriptor with line
 	//$this->tabs = array(
