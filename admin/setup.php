@@ -255,7 +255,7 @@ if ($action == 'updateMask') {
 
 // ---------- inicio: handler para subir certificado .cer y llave .key ----------
 if ($action == 'savecert' && $user->admin) {
-    // seguridad token opcional
+    // Validacion de token CSRF obligatoria
     if (empty($_REQUEST['token']) || $_REQUEST['token'] !== $_SESSION['newtoken']) {
         setEventMessages($langs->trans('ErrorBadToken'), null, 'errors');
     } else {
@@ -275,35 +275,54 @@ if ($action == 'savecert' && $user->admin) {
             } elseif ($cer['error'] !== UPLOAD_ERR_OK || $key['error'] !== UPLOAD_ERR_OK) {
                 setEventMessages($langs->trans('UploadError'), null, 'errors');
             } else {
-                // Determinar nombre del certificado (basename sin extensión)
-                $certName = pathinfo($cer['name'], PATHINFO_FILENAME);
-                if (empty($certName)) $certName = 'cert_'.time();
+                $cerContent = file_get_contents($cer['tmp_name']);
+                $keyContent = file_get_contents($key['tmp_name']);
 
-                $targetDir = DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/'.$certName.'/';
-                if (!is_dir($targetDir)) {
-                    if (!mkdir($targetDir, 0777, true)) {
-                        setEventMessages($langs->trans('CantCreateDir')." ".$targetDir, null, 'errors');
-                        // evitar continuar si no se puede crear carpeta
-                        header('Location: '.$_SERVER['PHP_SELF']);
-                        exit;
-                    }
-					chmod($targetDir, 0755);
-                }
+                // Validar que el .cer sea realmente un certificado X509 (DER o PEM)
+                $certRes = ($cerContent !== false) ? @openssl_x509_read($cerContent) : false;
+                // Validar que el .key sea realmente una llave privada y que la contraseña la abra
+                $pkeyRes = ($keyContent !== false) ? @openssl_pkey_get_private($keyContent, $certPsw) : false;
 
-                $dstCer = $targetDir.$certName.'.cer';
-                $dstKey = $targetDir.$certName.'.key';
-
-                $okCer = move_uploaded_file($cer['tmp_name'], $dstCer);
-                $okKey = move_uploaded_file($key['tmp_name'], $dstKey);
-
-                if ($okCer && $okKey) {
-                    // Guardar constantes Dolibarr para usar en el módulo
-                    dolibarr_set_const($db, 'MAIN_INFO_CFDI_CERT_NAME', $certName, 'chaine', 0, '', $conf->entity);
-                    dolibarr_set_const($db, 'MAIN_INFO_CFDI_CERT_PSW', $certPsw, 'chaine', 0, '', $conf->entity);
-
-                    setEventMessages($langs->trans('FilesSavedOK'), null, 'mesgs');
+                if ($certRes === false || $pkeyRes === false) {
+                    setEventMessages($langs->trans('InvalidCertOrPassword'), null, 'errors');
                 } else {
-                    setEventMessages($langs->trans('CantMoveUploadedFiles'), null, 'errors');
+                    // Nombre saneado del certificado: solo alfanumerico, guion y guion bajo
+                    $certName = preg_replace('/[^A-Za-z0-9_-]/', '', basename(pathinfo($cer['name'], PATHINFO_FILENAME)));
+                    $certName = substr($certName, 0, 64);
+                    if ($certName === '' || $certName === '.' || $certName === '..') {
+                        $certName = 'cert_'.time();
+                    }
+
+                    $targetDir = DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/'.$certName.'/';
+                    if (!is_dir($targetDir)) {
+                        if (!dol_mkdir($targetDir)) {
+                            setEventMessages($langs->trans('CantCreateDir')." ".$targetDir, null, 'errors');
+                            // evitar continuar si no se puede crear carpeta
+                            header('Location: '.$_SERVER['PHP_SELF']);
+                            exit;
+                        }
+                    }
+                    // Bloquear acceso web directo al directorio de certificados (defensa en profundidad)
+                    $certRootDir = DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/';
+                    if (!file_exists($certRootDir.'.htaccess')) {
+                        file_put_contents($certRootDir.'.htaccess', "Require all denied\nphp_flag engine off\n");
+                    }
+
+                    $dstCer = $targetDir.$certName.'.cer';
+                    $dstKey = $targetDir.$certName.'.key';
+
+                    $okCer = move_uploaded_file($cer['tmp_name'], $dstCer);
+                    $okKey = move_uploaded_file($key['tmp_name'], $dstKey);
+
+                    if ($okCer && $okKey) {
+                        // Guardar constantes Dolibarr para usar en el módulo (password cifrada en reposo)
+                        dolibarr_set_const($db, 'MAIN_INFO_CFDI_CERT_NAME', $certName, 'chaine', 0, '', $conf->entity);
+                        dolibarr_set_const($db, 'MAIN_INFO_CFDI_CERT_PSW', dolEncrypt($certPsw), 'chaine', 0, '', $conf->entity);
+
+                        setEventMessages($langs->trans('FilesSavedOK'), null, 'mesgs');
+                    } else {
+                        setEventMessages($langs->trans('CantMoveUploadedFiles'), null, 'errors');
+                    }
                 }
             }
         }

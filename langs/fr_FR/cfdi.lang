@@ -42,6 +42,7 @@ CantMoveUploadedFiles = Impossible de déplacer les fichiers téléchargés
 InvalidFileType = Type de fichier invalide (accepté : .cer, .pem, .key)
 UploadError = Erreur lors du téléchargement
 MissingFile = Fichier certificat ou clé manquant
+InvalidCertOrPassword = Fichier certificat/clé invalide ou mot de passe incorrect
 Timbrar = Tamponner CFDI
 ConfirmTimbrar = Voulez-vous tamponner cette facture ?
 CancelarCFDI = Annuler CFDI

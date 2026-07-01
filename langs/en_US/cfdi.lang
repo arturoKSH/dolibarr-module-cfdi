@@ -42,6 +42,7 @@ CantMoveUploadedFiles = Cannot move uploaded files
 InvalidFileType = Invalid file type (accepted: .cer, .pem, .key)
 UploadError = Error uploading file
 MissingFile = Missing certificate or key file
+InvalidCertOrPassword = Invalid certificate/key file or wrong password
 Timbrar = Stamp CFDI
 ConfirmTimbrar = Do you want to stamp this invoice?
 CancelarCFDI = Cancel CFDI

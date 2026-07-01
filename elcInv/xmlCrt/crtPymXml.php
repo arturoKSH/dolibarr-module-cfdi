@@ -264,7 +264,7 @@ if ($action == 'confirm_Cancel_CFDI' && $confirm == 'yes') {
 	$credentials = new Credentials(
     DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/'.$certN.'/'.$certN.'.cer.pem',
     DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/'.$certN.'/'.$certN.'.key.pem',
-    $conf->global->MAIN_INFO_CFDI_CERT_PSW);          
+    dolDecrypt($conf->global->MAIN_INFO_CFDI_CERT_PSW));
             
             
 	//cancelar
