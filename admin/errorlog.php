@@ -47,7 +47,7 @@ require_once '../lib/cfdi.lib.php';
 $langs->loadLangs(array("admin", "cfdi@cfdi"));
 $hookmanager->initHooks(array('cfdierrorlog', 'globalsetup'));
 
-if (!$user->hasRight('cfdi', 'read')) {
+if (!$user->admin) {
 	accessforbidden();
 }
 
