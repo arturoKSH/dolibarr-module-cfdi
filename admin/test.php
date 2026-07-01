@@ -97,8 +97,8 @@ print load_fiche_titre($langs->trans($page_name), $linkback, 'title_setup');
 $head = cfdiAdminPrepareHead();
 print dol_get_fiche_head($head, 'test', $langs->trans($page_name), -1, "cfdi@cfdi");
 
-print '<h3>Diagnóstico del Módulo CFDI</h3>';
-print '<p class="opacitymedium">Verifica que la instalación del módulo esté completa y los servicios externos respondan.</p>';
+print '<h3>'.$langs->trans('CfdiDiagTitle').'</h3>';
+print '<p class="opacitymedium">'.$langs->trans('CfdiDiagIntro').'</p>';
 
 // ─── Configuración actual (siempre visible) ──────────────────────────────────
 
@@ -109,24 +109,24 @@ $cancelUrlTest = !empty($conf->global->CFDI_CANCEL_URL_TEST) ? $conf->global->CF
 $cancelUrlProd = !empty($conf->global->CFDI_CANCEL_URL_PROD) ? $conf->global->CFDI_CANCEL_URL_PROD : 'https://cfdi.timbrado.com.mx/CancelacionServices/CancelacionServices.asmx?WSDL';
 $activeStamp   = ($currentEnv === 'prod') ? $stampUrlProd   : $stampUrlTest;
 $activeCancel  = ($currentEnv === 'prod') ? $cancelUrlProd  : $cancelUrlTest;
-$pacUser       = !empty($conf->global->CFDI_PAC_USER) ? dol_escape_htmltag($conf->global->CFDI_PAC_USER) : '<span style="color:red">No configurado</span>';
+$pacUser       = !empty($conf->global->CFDI_PAC_USER) ? dol_escape_htmltag($conf->global->CFDI_PAC_USER) : '<span style="color:red">'.$langs->trans('NotConfigured').'</span>';
 $certName      = !empty($conf->global->MAIN_INFO_CFDI_CERT_NAME) ? $conf->global->MAIN_INFO_CFDI_CERT_NAME : '';
 
 $envLabel = ($currentEnv === 'prod')
-	? '<span style="color:#c8000a;font-weight:bold">&#9679; Producción</span>'
-	: '<span style="color:#0063cb;font-weight:bold">&#9679; Pruebas (Test)</span>';
+	? '<span style="color:#c8000a;font-weight:bold">&#9679; '.$langs->trans('CfdiEnvProd').'</span>'
+	: '<span style="color:#0063cb;font-weight:bold">&#9679; '.$langs->trans('CfdiEnvTest').'</span>';
 
-print '<h4>Configuración Actual</h4>';
+print '<h4>'.$langs->trans('CfdiCurrentConfig').'</h4>';
 print '<table class="noborder centpercent">';
-print '<tr class="oddeven"><td width="220">Ambiente activo</td><td>'.$envLabel.'</td></tr>';
-print '<tr class="oddeven"><td>URL timbrado activa</td><td><code>'.dol_escape_htmltag($activeStamp).'</code></td></tr>';
-print '<tr class="oddeven"><td>URL cancelación activa</td><td><code>'.dol_escape_htmltag($activeCancel).'</code></td></tr>';
-print '<tr class="oddeven"><td>Usuario PAC</td><td>'.$pacUser.'</td></tr>';
-print '<tr class="oddeven"><td>Certificado digital</td><td>';
+print '<tr class="oddeven"><td width="220">'.$langs->trans('CfdiActiveEnv').'</td><td>'.$envLabel.'</td></tr>';
+print '<tr class="oddeven"><td>'.$langs->trans('CfdiActiveStampUrl').'</td><td><code>'.dol_escape_htmltag($activeStamp).'</code></td></tr>';
+print '<tr class="oddeven"><td>'.$langs->trans('CfdiActiveCancelUrl').'</td><td><code>'.dol_escape_htmltag($activeCancel).'</code></td></tr>';
+print '<tr class="oddeven"><td>'.$langs->trans('CfdiPacUser').'</td><td>'.$pacUser.'</td></tr>';
+print '<tr class="oddeven"><td>'.$langs->trans('DigitalCertificate').'</td><td>';
 if ($certName) {
 	print '<span class="fa fa-check" style="color:green"></span> '.dol_escape_htmltag($certName);
 } else {
-	print '<span class="fa fa-times" style="color:red"></span> <span style="color:red">No configurado</span>';
+	print '<span class="fa fa-times" style="color:red"></span> <span style="color:red">'.$langs->trans('NotConfigured').'</span>';
 }
 print '</td></tr>';
 print '</table>';
@@ -137,7 +137,7 @@ print '<br>';
 print '<form method="post" action="'.$_SERVER['PHP_SELF'].'">';
 print '<input type="hidden" name="token" value="'.newToken().'">';
 print '<input type="hidden" name="action" value="run">';
-print '<button type="submit" class="butAction"><span class="fa fa-play"></span> Ejecutar Diagnóstico</button>';
+print '<button type="submit" class="butAction"><span class="fa fa-play"></span> '.$langs->trans('RunDiagnostic').'</button>';
 print '</form>';
 print '<br>';
 
@@ -147,36 +147,36 @@ if ($runTest) {
 
 	// ── 1. Ping a servicios ────────────────────────────────────────────────
 
-	print '<h4>Conectividad con Servicios de Timbrado</h4>';
+	print '<h4>'.$langs->trans('StampServiceConnectivity').'</h4>';
 	print '<table class="noborder centpercent">';
 	print '<tr class="liste_titre">';
-	print '<td>Servicio</td>';
+	print '<td>'.$langs->trans('CfdiServiceCol').'</td>';
 	print '<td>URL</td>';
-	print '<td class="center" width="80">Estado</td>';
+	print '<td class="center" width="80">'.$langs->trans('CfdiStatusCol').'</td>';
 	print '<td class="center" width="80">HTTP</td>';
-	print '<td class="center" width="80">Tiempo</td>';
+	print '<td class="center" width="80">'.$langs->trans('CfdiTimeCol').'</td>';
 	print '</tr>';
 
 	$pingTargets = array(
-		'Timbrado ('.$currentEnv.')' => $activeStamp,
-		'Cancelación ('.$currentEnv.')' => $activeCancel,
+		$langs->trans('CfdiStamping').' ('.$currentEnv.')' => $activeStamp,
+		$langs->trans('CfdiCancellation').' ('.$currentEnv.')' => $activeCancel,
 	);
 
 	foreach ($pingTargets as $label => $url) {
 		$ping = cfdiPingWsdl($url);
 
 		if ($ping['ok']) {
-			$statusIcon = '<span class="fa fa-check" style="color:green"></span> <span style="color:green">Accesible</span>';
+			$statusIcon = '<span class="fa fa-check" style="color:green"></span> <span style="color:green">'.$langs->trans('CfdiAccessible').'</span>';
 		} elseif ($ping['code'] > 0) {
-			$statusIcon = '<span class="fa fa-exclamation-triangle" style="color:orange"></span> <span style="color:orange">Responde sin WSDL</span>';
+			$statusIcon = '<span class="fa fa-exclamation-triangle" style="color:orange"></span> <span style="color:orange">'.$langs->trans('CfdiRespondsNoWsdl').'</span>';
 		} else {
-			$statusIcon = '<span class="fa fa-times" style="color:red"></span> <span style="color:red">Sin respuesta</span>';
+			$statusIcon = '<span class="fa fa-times" style="color:red"></span> <span style="color:red">'.$langs->trans('CfdiNoResponse').'</span>';
 		}
 
 		$codeHtml = $ping['code'] ? $ping['code'] : '-';
 		$msHtml   = $ping['ms']   ? $ping['ms'].'ms' : '-';
 		if (!empty($ping['error'])) {
-			$msHtml = '<span style="color:red" title="'.dol_escape_htmltag($ping['error']).'">Error</span>';
+			$msHtml = '<span style="color:red" title="'.dol_escape_htmltag($ping['error']).'">'.$langs->trans('CfdiErrorCol').'</span>';
 		}
 
 		print '<tr class="oddeven">';
@@ -193,39 +193,39 @@ if ($runTest) {
 
 	// ── 2. Certificado digital ─────────────────────────────────────────────
 
-	print '<h4>Estado del Certificado Digital</h4>';
+	print '<h4>'.$langs->trans('CfdiCertStatusTitle').'</h4>';
 	print '<table class="noborder centpercent">';
 
 	if (empty($certName)) {
 		print '<tr class="oddeven"><td>';
-		print '<span class="fa fa-times" style="color:red"></span> <span style="color:red">No hay certificado configurado. Súbelo en la pestaña Configuración.</span>';
+		print '<span class="fa fa-times" style="color:red"></span> <span style="color:red">'.$langs->trans('CfdiNoCertConfigured').'</span>';
 		print '</td></tr>';
 	} else {
 		$cert = cfdiParseCert($certName);
 
 		if (!empty($cert['error'])) {
-			print '<tr class="liste_titre"><td>Campo</td><td>Valor</td></tr>';
-			print '<tr class="oddeven"><td>Error</td><td><span style="color:red">'.dol_escape_htmltag($cert['error']).'</span></td></tr>';
+			print '<tr class="liste_titre"><td>'.$langs->trans('CfdiFieldCol').'</td><td>'.$langs->trans('CfdiValueCol').'</td></tr>';
+			print '<tr class="oddeven"><td>'.$langs->trans('CfdiErrorCol').'</td><td><span style="color:red">'.dol_escape_htmltag($cert['error']).'</span></td></tr>';
 		} else {
 			$daysLeft  = $cert['daysLeft'];
 			$expired   = $cert['expired'];
 
 			if ($expired) {
 				$certStatusIcon = '<span class="fa fa-times" style="color:red"></span>';
-				$daysHtml = '<span style="color:red;font-weight:bold">VENCIDO hace '.abs($daysLeft).' días</span>';
+				$daysHtml = '<span style="color:red;font-weight:bold">'.sprintf($langs->trans('CfdiCertExpiredStatus'), abs($daysLeft)).'</span>';
 			} elseif ($daysLeft <= 30) {
 				$certStatusIcon = '<span class="fa fa-exclamation-triangle" style="color:orange"></span>';
-				$daysHtml = '<span style="color:orange;font-weight:bold">Vence en '.$daysLeft.' días</span>';
+				$daysHtml = '<span style="color:orange;font-weight:bold">'.sprintf($langs->trans('CfdiCertExpiringStatus'), $daysLeft).'</span>';
 			} else {
 				$certStatusIcon = '<span class="fa fa-check" style="color:green"></span>';
-				$daysHtml = '<span style="color:green">Vigente ('.$daysLeft.' días restantes)</span>';
+				$daysHtml = '<span style="color:green">'.sprintf($langs->trans('CfdiCertValidStatus'), $daysLeft).'</span>';
 			}
 
-			print '<tr class="liste_titre"><td width="220">Campo</td><td>Valor</td></tr>';
-			print '<tr class="oddeven"><td>Estado</td><td>'.$certStatusIcon.' '.$daysHtml.'</td></tr>';
-			print '<tr class="oddeven"><td>Titular (CN)</td><td>'.dol_escape_htmltag($cert['cn']).'</td></tr>';
-			print '<tr class="oddeven"><td>Válido desde</td><td>'.dol_escape_htmltag($cert['validFrom']).'</td></tr>';
-			print '<tr class="oddeven"><td>Válido hasta</td><td>'.dol_escape_htmltag($cert['validTo']).'</td></tr>';
+			print '<tr class="liste_titre"><td width="220">'.$langs->trans('CfdiFieldCol').'</td><td>'.$langs->trans('CfdiValueCol').'</td></tr>';
+			print '<tr class="oddeven"><td>'.$langs->trans('CfdiStatusCol').'</td><td>'.$certStatusIcon.' '.$daysHtml.'</td></tr>';
+			print '<tr class="oddeven"><td>'.$langs->trans('CfdiCertHolder').'</td><td>'.dol_escape_htmltag($cert['cn']).'</td></tr>';
+			print '<tr class="oddeven"><td>'.$langs->trans('CfdiValidFrom').'</td><td>'.dol_escape_htmltag($cert['validFrom']).'</td></tr>';
+			print '<tr class="oddeven"><td>'.$langs->trans('CfdiValidTo').'</td><td>'.dol_escape_htmltag($cert['validTo']).'</td></tr>';
 		}
 	}
 
@@ -235,22 +235,22 @@ if ($runTest) {
 	// ── 3. Tablas de catálogo ──────────────────────────────────────────────
 
 	$catalogTables = array(
-		'llx_usocfdi'                => 'Usos de CFDI (SAT)',
-		'llx_FiscalRegimen'          => 'Regímenes Fiscales',
-		'llx_kshtyperelsat'          => 'Tipos de Relación SAT',
-		'llx_serie'                  => 'Series de Folio',
-		'llx_kshCancelcfdi'          => 'Cancelaciones registradas',
-		'llx_kshacceptordeclinecfdi' => 'Aceptaciones / Rechazos',
-		'llx_kshcfdirelations'       => 'CFDIs relacionados',
+		'llx_usocfdi'                => $langs->trans('CfdiCatalogUsoCfdi'),
+		'llx_FiscalRegimen'          => $langs->trans('CfdiCatalogFiscalRegimen'),
+		'llx_kshtyperelsat'          => $langs->trans('CfdiCatalogTypeRelSat'),
+		'llx_serie'                  => $langs->trans('CfdiCatalogSerie'),
+		'llx_kshCancelcfdi'          => $langs->trans('CfdiCatalogCancelaciones'),
+		'llx_kshacceptordeclinecfdi' => $langs->trans('CfdiCatalogAceptaciones'),
+		'llx_kshcfdirelations'       => $langs->trans('CfdiCatalogRelaciones'),
 	);
 
-	print '<h4>Tablas de Catálogo</h4>';
+	print '<h4>'.$langs->trans('CfdiCatalogTablesTitle').'</h4>';
 	print '<table class="noborder centpercent">';
 	print '<tr class="liste_titre">';
-	print '<td>Tabla</td>';
-	print '<td>Descripción</td>';
-	print '<td class="center" width="80">Existe</td>';
-	print '<td class="center" width="100">Registros</td>';
+	print '<td>'.$langs->trans('CfdiTableCol').'</td>';
+	print '<td>'.$langs->trans('CfdiDescriptionCol').'</td>';
+	print '<td class="center" width="80">'.$langs->trans('CfdiExists').'</td>';
+	print '<td class="center" width="100">'.$langs->trans('CfdiRecords').'</td>';
 	print '</tr>';
 
 	foreach ($catalogTables as $tableName => $desc) {
@@ -286,7 +286,7 @@ if ($runTest) {
 
 	// ── 4. Extrafields en facturas ─────────────────────────────────────────
 
-	print '<h4>Extrafields en Facturas</h4>';
+	print '<h4>'.$langs->trans('CfdiExtrafieldsFacturasTitle').'</h4>';
 
 	$resTable      = $db->query("SHOW TABLES LIKE '".$db->escape(MAIN_DB_PREFIX.'facture_extrafields')."'");
 	$extraTableExists = ($resTable && $db->num_rows($resTable) > 0);
@@ -295,10 +295,10 @@ if ($runTest) {
 	if ($resql && $db->num_rows($resql) > 0) {
 		print '<table class="noborder centpercent">';
 		print '<tr class="liste_titre">';
-		print '<td>Nombre</td>';
-		print '<td>Etiqueta</td>';
-		print '<td>Tipo</td>';
-		print '<td class="center" width="120">Columna en BD</td>';
+		print '<td>'.$langs->trans('CfdiNameCol').'</td>';
+		print '<td>'.$langs->trans('CfdiLabelCol').'</td>';
+		print '<td>'.$langs->trans('CfdiTypeCol').'</td>';
+		print '<td class="center" width="120">'.$langs->trans('CfdiDbColumn').'</td>';
 		print '</tr>';
 
 		while ($obj = $db->fetch_object($resql)) {
@@ -322,7 +322,7 @@ if ($runTest) {
 
 		print '</table>';
 	} else {
-		print '<p class="opacitymedium">No hay extrafields definidos para facturas en llx_extrafields.</p>';
+		print '<p class="opacitymedium">'.$langs->trans('CfdiNoExtrafieldsDefined').'</p>';
 	}
 }
 

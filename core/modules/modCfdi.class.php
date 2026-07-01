@@ -436,14 +436,19 @@ class modCfdi extends DolibarrModules
 			return -1; // Do not activate module if error 'not allowed' returned when loading module SQL queries (the _load_table run sql with run_sql with the error allowed parameter set to 'default')
 		}
 
-		// Create extrafields during init
-		//include_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
-		//$extrafields = new ExtraFields($this->db);
-		//$result1=$extrafields->addExtraField('cfdi_myattr1', "New Attr 1 label", 'boolean', 1,  3, 'thirdparty',   0, 0, '', '', 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
-		//$result2=$extrafields->addExtraField('cfdi_myattr2', "New Attr 2 label", 'varchar', 1, 10, 'project',      0, 0, '', '', 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
-		//$result3=$extrafields->addExtraField('cfdi_myattr3', "New Attr 3 label", 'varchar', 1, 10, 'bank_account', 0, 0, '', '', 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
-		//$result4=$extrafields->addExtraField('cfdi_myattr4', "New Attr 4 label", 'select',  1,  3, 'thirdparty',   0, 1, '', array('options'=>array('code1'=>'Val1','code2'=>'Val2','code3'=>'Val3')), 1,'', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
-		//$result5=$extrafields->addExtraField('cfdi_myattr5', "New Attr 5 label", 'text',    1, 10, 'user',         0, 0, '', '', 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
+		// Create extrafields during init.
+		// These are the extrafields the module's own code reads/writes at runtime
+		// (options_uuid, options_warehouse, options_propouse) but that were never
+		// declared here before, so a fresh install had no way to create them.
+		include_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
+		$extrafields = new ExtraFields($this->db);
+		// UUID del CFDI timbrado (llenado por el modulo despues de timbrar la factura)
+		$extrafields->addExtraField('uuid', 'ExtrafieldCfdiUuid', 'varchar', 100, 40, 'facture', 0, 0, '', '', 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
+		// Almacen usado para el movimiento de stock al timbrar/cancelar
+		$extrafields->addExtraField('warehouse', 'ExtrafieldCfdiWarehouse', 'sellist', 101, 10, 'facture', 0, 0, '', array('options' => array('entrepot:ref:rowid::' => 'N')), 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
+		// Uso de CFDI (catalogo SAT, ya se instala en llx_usocfdi via sql/cfdi.sql)
+		$extrafields->addExtraField('propouse', 'ExtrafieldCfdiPropouse', 'sellist', 102, 20, 'facture', 0, 0, '', array('options' => array('usocfdi:Descripcion:usocfdi_id::' => 'N')), 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
+		$extrafields->addExtraField('propouse', 'ExtrafieldCfdiPropouse', 'sellist', 1, 20, 'thirdparty', 0, 0, '', array('options' => array('usocfdi:Descripcion:usocfdi_id::' => 'N')), 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
 
 		// Permissions
 		$this->remove($options);

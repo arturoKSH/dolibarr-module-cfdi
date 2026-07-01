@@ -110,31 +110,31 @@ $item->cssClass = 'minwidth300';
 // Ambiente de timbrado
 $currentEnv = !empty($conf->global->CFDI_ENV) ? $conf->global->CFDI_ENV : 'test';
 $item = $formSetup->newItem('CFDI_ENV');
-$item->nameText = 'Ambiente de timbrado';
+$item->nameText = $langs->trans('CfdiEnvLabel');
 $selectHtml  = '<select name="CFDI_ENV" class="flat minwidth200">';
-$selectHtml .= '<option value="test"'.($currentEnv === 'test' ? ' selected' : '').'>Pruebas (Test)</option>';
-$selectHtml .= '<option value="prod"'.($currentEnv === 'prod' ? ' selected' : '').'>Producción</option>';
+$selectHtml .= '<option value="test"'.($currentEnv === 'test' ? ' selected' : '').'>'.$langs->trans('CfdiEnvTest').'</option>';
+$selectHtml .= '<option value="prod"'.($currentEnv === 'prod' ? ' selected' : '').'>'.$langs->trans('CfdiEnvProd').'</option>';
 $selectHtml .= '</select>';
 $item->fieldInputOverride  = $selectHtml;
-$item->fieldOutputOverride = ($currentEnv === 'prod') ? 'Producción' : 'Pruebas (Test)';
+$item->fieldOutputOverride = ($currentEnv === 'prod') ? $langs->trans('CfdiEnvProd') : $langs->trans('CfdiEnvTest');
 
 $item = $formSetup->newItem('CFDI_STAMP_URL_TEST');
-$item->nameText = 'URL timbrado (Pruebas)';
+$item->nameText = $langs->trans('CfdiStampUrlTest');
 $item->cssClass = 'minwidth500';
 $item->fieldAttr = array('placeholder' => 'https://develop.timbrado.com.mx/wsTimbrado.asmx?WSDL');
 
 $item = $formSetup->newItem('CFDI_STAMP_URL_PROD');
-$item->nameText = 'URL timbrado (Producción)';
+$item->nameText = $langs->trans('CfdiStampUrlProd');
 $item->cssClass = 'minwidth500';
 $item->fieldAttr = array('placeholder' => 'https://cfdi33.timbrado.com.mx/wsTimbrado.asmx?WSDL');
 
 $item = $formSetup->newItem('CFDI_CANCEL_URL_TEST');
-$item->nameText = 'URL cancelación (Pruebas)';
+$item->nameText = $langs->trans('CfdiCancelUrlTest');
 $item->cssClass = 'minwidth500';
 $item->fieldAttr = array('placeholder' => 'https://develop.timbrado.com.mx/CancelacionServices/CancelacionServices.asmx?WSDL');
 
 $item = $formSetup->newItem('CFDI_CANCEL_URL_PROD');
-$item->nameText = 'URL cancelación (Producción)';
+$item->nameText = $langs->trans('CfdiCancelUrlProd');
 $item->cssClass = 'minwidth500';
 $item->fieldAttr = array('placeholder' => 'https://cfdi.timbrado.com.mx/CancelacionServices/CancelacionServices.asmx?WSDL');
 
@@ -142,18 +142,18 @@ $item->fieldAttr = array('placeholder' => 'https://cfdi.timbrado.com.mx/Cancelac
 // expone el mismo esquema (GeneraTimbre + AuthenticationHeader). Un PAC con un contrato
 // distinto requiere su propio archivo de timbrado, esto no reemplaza eso.
 $item = $formSetup->newItem('CFDI_PAC_PROVIDER');
-$item->nameText = 'Proveedor PAC (referencia)';
+$item->nameText = $langs->trans('CfdiPacProvider');
 $item->cssClass = 'minwidth300';
 $item->fieldAttr = array('placeholder' => 'ateb');
-$item->helpText = 'Solo informativo salvo que tambien ajustes namespace/metodo SOAP abajo.';
+$item->helpText = $langs->trans('CfdiPacProviderHelp');
 
 $item = $formSetup->newItem('CFDI_SOAP_NAMESPACE');
-$item->nameText = 'Namespace SOAP del PAC';
+$item->nameText = $langs->trans('CfdiSoapNamespace');
 $item->cssClass = 'minwidth500';
 $item->fieldAttr = array('placeholder' => 'https://cfdi.timbrado.com.mx/timbradov2');
 
 $item = $formSetup->newItem('CFDI_SOAP_METHOD');
-$item->nameText = 'Metodo SOAP de timbrado';
+$item->nameText = $langs->trans('CfdiSoapMethod');
 $item->cssClass = 'minwidth300';
 $item->fieldAttr = array('placeholder' => 'GeneraTimbre');
 
