@@ -138,6 +138,25 @@ $item->nameText = 'URL cancelación (Producción)';
 $item->cssClass = 'minwidth500';
 $item->fieldAttr = array('placeholder' => 'https://cfdi.timbrado.com.mx/CancelacionServices/CancelacionServices.asmx?WSDL');
 
+// Proveedor PAC: solo cambia el contrato SOAP (namespace/metodo) si el nuevo proveedor
+// expone el mismo esquema (GeneraTimbre + AuthenticationHeader). Un PAC con un contrato
+// distinto requiere su propio archivo de timbrado, esto no reemplaza eso.
+$item = $formSetup->newItem('CFDI_PAC_PROVIDER');
+$item->nameText = 'Proveedor PAC (referencia)';
+$item->cssClass = 'minwidth300';
+$item->fieldAttr = array('placeholder' => 'ateb');
+$item->helpText = 'Solo informativo salvo que tambien ajustes namespace/metodo SOAP abajo.';
+
+$item = $formSetup->newItem('CFDI_SOAP_NAMESPACE');
+$item->nameText = 'Namespace SOAP del PAC';
+$item->cssClass = 'minwidth500';
+$item->fieldAttr = array('placeholder' => 'https://cfdi.timbrado.com.mx/timbradov2');
+
+$item = $formSetup->newItem('CFDI_SOAP_METHOD');
+$item->nameText = 'Metodo SOAP de timbrado';
+$item->cssClass = 'minwidth300';
+$item->fieldAttr = array('placeholder' => 'GeneraTimbre');
+
 
 $setupnotempty += count($formSetup->items);
 
@@ -315,6 +334,15 @@ if ($action == 'savecert' && $user->admin) {
                     $okKey = move_uploaded_file($key['tmp_name'], $dstKey);
 
                     if ($okCer && $okKey) {
+                        // Si habia un certificado anterior con otro nombre, limpiar su carpeta (evita huerfanos)
+                        $oldCertName = getDolGlobalString('MAIN_INFO_CFDI_CERT_NAME');
+                        if (!empty($oldCertName) && $oldCertName !== $certName) {
+                            $oldDir = DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/'.$oldCertName.'/';
+                            if (is_dir($oldDir)) {
+                                dol_delete_dir_recursive($oldDir);
+                            }
+                        }
+
                         // Guardar constantes Dolibarr para usar en el módulo (password cifrada en reposo)
                         dolibarr_set_const($db, 'MAIN_INFO_CFDI_CERT_NAME', $certName, 'chaine', 0, '', $conf->entity);
                         dolibarr_set_const($db, 'MAIN_INFO_CFDI_CERT_PSW', dolEncrypt($certPsw), 'chaine', 0, '', $conf->entity);
@@ -332,6 +360,27 @@ if ($action == 'savecert' && $user->admin) {
     exit;
 }
 // ---------- fin: handler para subir certificado .cer y llave .key ----------
+
+// ---------- inicio: handler para eliminar el certificado configurado ----------
+if ($action == 'deletecert' && $user->admin) {
+    if (empty($_REQUEST['token']) || $_REQUEST['token'] !== $_SESSION['newtoken']) {
+        setEventMessages($langs->trans('ErrorBadToken'), null, 'errors');
+    } else {
+        $certNameToDelete = getDolGlobalString('MAIN_INFO_CFDI_CERT_NAME');
+        if (!empty($certNameToDelete)) {
+            $certDir = DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/'.$certNameToDelete.'/';
+            if (is_dir($certDir)) {
+                dol_delete_dir_recursive($certDir);
+            }
+        }
+        dolibarr_del_const($db, 'MAIN_INFO_CFDI_CERT_NAME', $conf->entity);
+        dolibarr_del_const($db, 'MAIN_INFO_CFDI_CERT_PSW', $conf->entity);
+        setEventMessages($langs->trans('CertDeletedOK'), null, 'mesgs');
+    }
+    header('Location: '.$_SERVER['PHP_SELF']);
+    exit;
+}
+// ---------- fin: handler para eliminar el certificado configurado ----------
 
 
 
@@ -358,6 +407,19 @@ print dol_get_fiche_head($head, 'settings', $langs->trans($page_name), -1, "cfdi
 // Setup page goes here
 echo '<span class="opacitymedium">'.$langs->trans("CfdiSetupPage").'</span><br><br>';
 
+// Alerta de vencimiento del certificado configurado
+$currentCertName = getDolGlobalString('MAIN_INFO_CFDI_CERT_NAME');
+if (!empty($currentCertName)) {
+	$certStatus = cfdiParseCert($currentCertName);
+	if (empty($certStatus['error'])) {
+		if ($certStatus['expired']) {
+			print '<div class="warning">'.sprintf($langs->trans('CertExpiredWarning'), abs($certStatus['daysLeft'])).'</div><br>';
+		} elseif ($certStatus['daysLeft'] <= 30) {
+			print '<div class="warning">'.sprintf($langs->trans('CertExpiringWarning'), $certStatus['daysLeft']).'</div><br>';
+		}
+	}
+}
+
 // Formulario para subir certificado .cer y llave .key
 print '<h4>'.$langs->transnoentities('UploadCertAndKey').'</h4>';
 print '<form method="post" enctype="multipart/form-data" action="'.$_SERVER['PHP_SELF'].'?action=savecert&token='.newToken().'">';
@@ -368,6 +430,12 @@ print '<tr><td>'.$langs->transnoentities('CertPassword').'</td><td><input type="
 print '<tr><td></td><td><button class="butAction" type="submit">'.$langs->transnoentities('Save').'</button></td></tr>';
 print '</table>';
 print '</form>';
+
+if (!empty($currentCertName)) {
+	print '<form method="post" action="'.$_SERVER['PHP_SELF'].'?action=deletecert&token='.newToken().'" onsubmit="return confirm('."'".dol_escape_js($langs->trans('DeleteCertConfirm'))."'".');">';
+	print '<button class="butActionDelete" type="submit">'.$langs->transnoentities('DeleteCert').'</button>';
+	print '</form>';
+}
 print '<br>';
 
 if ($action == 'edit') {

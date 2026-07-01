@@ -84,54 +84,7 @@ function cfdiPingWsdl($url)
 	return array('ok' => $ok, 'code' => $code, 'ms' => $ms, 'error' => $err, 'wsdl' => $isWsdl);
 }
 
-/**
- * Lee un .cer (DER o PEM) y devuelve info del certificado o array con error.
- */
-function cfdiParseCert($certName)
-{
-	$base = DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/'.basename($certName).'/';
-
-	// Intentar PEM primero, luego convertir DER
-	$pemFile = $base.$certName.'.cer.pem';
-	$derFile = $base.$certName.'.cer';
-
-	$pem = '';
-	if (file_exists($pemFile)) {
-		$pem = file_get_contents($pemFile);
-	} elseif (file_exists($derFile)) {
-		$der = file_get_contents($derFile);
-		if ($der !== false) {
-			$pem = "-----BEGIN CERTIFICATE-----\n".chunk_split(base64_encode($der), 64, "\n")."-----END CERTIFICATE-----\n";
-		}
-	}
-
-	if (empty($pem)) {
-		return array('error' => 'Archivo de certificado no encontrado en '.$base);
-	}
-
-	$info = @openssl_x509_parse($pem);
-	if (!$info) {
-		return array('error' => 'No se pudo leer el certificado (openssl_x509_parse)');
-	}
-
-	$validTo   = isset($info['validTo_time_t'])   ? (int) $info['validTo_time_t']   : 0;
-	$validFrom = isset($info['validFrom_time_t']) ? (int) $info['validFrom_time_t'] : 0;
-	$now       = time();
-	$daysLeft  = $validTo ? (int) round(($validTo - $now) / 86400) : 0;
-	$expired   = ($validTo && $now > $validTo);
-	$subject   = isset($info['subject']) ? $info['subject'] : array();
-	$cn        = isset($subject['CN']) ? $subject['CN'] : (isset($subject['O']) ? $subject['O'] : '');
-
-	return array(
-		'ok'        => !$expired && $validTo > 0,
-		'expired'   => $expired,
-		'daysLeft'  => $daysLeft,
-		'validFrom' => $validFrom ? date('d/m/Y', $validFrom) : '?',
-		'validTo'   => $validTo   ? date('d/m/Y', $validTo)   : '?',
-		'cn'        => $cn,
-		'error'     => '',
-	);
-}
+// cfdiParseCert() ahora vive en lib/cfdi.lib.php (compartida con admin/setup.php).
 
 // ─── View ────────────────────────────────────────────────────────────────────
 
