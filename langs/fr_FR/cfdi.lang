@@ -122,6 +122,19 @@ CfdiDbColumn = Colonne BD
 CfdiNoExtrafieldsDefined = Aucun extrafield défini pour les factures dans llx_extrafields.
 
 #
+# Error log page
+#
+CfdiErrorLogTitle = Journal des erreurs CFDI
+CfdiErrorLogIntro = Tentatives echouees de tamponnage et d'annulation, pour diagnostiquer les problemes du PAC sans dependre des captures d'ecran du client.
+CfdiErrorLogEmpty = Aucune tentative echouee enregistree.
+CfdiErrorLogTableMissing = Table du journal d'erreurs introuvable. Desactivez puis reactivez le module CFDI pour la creer.
+CfdiErrorLogDateCol = Date
+CfdiErrorLogActionCol = Action
+CfdiErrorLogInvoiceCol = Facture
+CfdiErrorLogUserCol = Utilisateur
+CfdiErrorLogMessageCol = Message d'erreur
+
+#
 # Extrafields
 #
 ExtrafieldCfdiUuid = UUID CFDI

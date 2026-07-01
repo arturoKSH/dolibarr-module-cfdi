@@ -61,8 +61,13 @@ function cfdiAdminPrepareHead()
 	$h++;
 
 	$head[$h][0] = dol_buildpath("/cfdi/admin/test.php", 1);
-	$head[$h][1] = 'Diagnóstico';
+	$head[$h][1] = $langs->trans('CfdiDiagTitle');
 	$head[$h][2] = 'test';
+	$h++;
+
+	$head[$h][0] = dol_buildpath("/cfdi/admin/errorlog.php", 1);
+	$head[$h][1] = $langs->trans('CfdiErrorLogTitle');
+	$head[$h][2] = 'errorlog';
 	$h++;
 
 	// Show more tabs from modules
@@ -130,4 +135,34 @@ function cfdiParseCert($certName)
 		'cn'        => $cn,
 		'error'     => '',
 	);
+}
+
+/**
+ * Registra un intento fallido de timbrado/cancelacion CFDI, para diagnostico.
+ * Solo se llama en las rutas de error -- no registra intentos exitosos.
+ *
+ * @param  DoliDB $db          Database handler
+ * @param  string $action      'timbrado' o 'cancelacion'
+ * @param  string $invoiceRef  Referencia de la factura (puede ser vacio si no se pudo determinar)
+ * @param  string $errmsg      Mensaje de error a registrar
+ * @param  int    $fkFacture   Id de la factura si se conoce, 0 si no
+ * @return void
+ */
+function cfdiLogError($db, $action, $invoiceRef, $errmsg, $fkFacture = 0)
+{
+	global $conf, $user;
+
+	$sql = "INSERT INTO ".MAIN_DB_PREFIX."kshcfdierrorlog";
+	$sql .= " (entity, datec, action, invoice_ref, fk_facture, fk_user, errmsg)";
+	$sql .= " VALUES (";
+	$sql .= (int) $conf->entity;
+	$sql .= ", '".$db->idate(dol_now())."'";
+	$sql .= ", '".$db->escape($action)."'";
+	$sql .= ", ".(empty($invoiceRef) ? "NULL" : "'".$db->escape($invoiceRef)."'");
+	$sql .= ", ".((int) $fkFacture > 0 ? (int) $fkFacture : "NULL");
+	$sql .= ", ".(!empty($user->id) ? (int) $user->id : "NULL");
+	$sql .= ", '".$db->escape($errmsg)."'";
+	$sql .= ")";
+
+	$db->query($sql);
 }

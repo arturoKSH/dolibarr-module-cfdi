@@ -60,6 +60,7 @@
   if ($lastSoapFault !== null) {
     trigger_error("SOAP Fault tras {$maxAttempts} intentos: (faultcode: {$lastSoapFault->faultcode}, faultstring: {$lastSoapFault->faultstring})", E_USER_WARNING);
     setEventMessages('No se pudo conectar con el PAC despues de '.$maxAttempts.' intentos: '.$lastSoapFault->faultstring, null, 'errors');
+    cfdiLogError($db, 'timbrado', $object->ref, 'SOAP Fault tras '.$maxAttempts.' intentos: '.$lastSoapFault->faultstring, $object->id);
     return;
   }
 
@@ -228,8 +229,8 @@
         if($result->GeneraTimbreResult->Error->Descripcion){
           setEventMessages( $result->GeneraTimbreResult->Error->Descripcion,$object->errors, 'errors');
         }
-       
-        
+        cfdiLogError($db, 'timbrado', $object->ref, $mssg, $object->id);
+
     }
 
 

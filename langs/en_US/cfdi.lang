@@ -122,6 +122,19 @@ CfdiDbColumn = DB column
 CfdiNoExtrafieldsDefined = No extrafields defined for invoices in llx_extrafields.
 
 #
+# Error log page
+#
+CfdiErrorLogTitle = CFDI Error Log
+CfdiErrorLogIntro = Failed stamping and cancellation attempts, to diagnose PAC issues without relying on client screenshots.
+CfdiErrorLogEmpty = No failed attempts recorded.
+CfdiErrorLogTableMissing = Error log table not found. Deactivate and reactivate the CFDI module to create it.
+CfdiErrorLogDateCol = Date
+CfdiErrorLogActionCol = Action
+CfdiErrorLogInvoiceCol = Invoice
+CfdiErrorLogUserCol = User
+CfdiErrorLogMessageCol = Error message
+
+#
 # Extrafields
 #
 ExtrafieldCfdiUuid = CFDI UUID
