@@ -264,22 +264,13 @@ class modCfdi extends DolibarrModules
 		// Permissions provided by this module
 		$this->rights = array();
 		$r = 0;
-		// Add here entries to declare new permissions
-		/* BEGIN MODULEBUILDER PERMISSIONS */
+		// Real permission actually checked by the module (menu entry, cfdiindex.php): $user->rights->cfdi->read
+		// The previous 'myobject'-based read/write/delete permissions here were unused ModuleBuilder
+		// placeholders (no MyObject card/list pages exist in this module) and never matched what the
+		// code actually checks, so they are replaced instead of kept alongside.
 		$this->rights[$r][0] = $this->numero . sprintf("%02d", $r + 1); // Permission id (must not be already used)
-		$this->rights[$r][1] = 'Read objects of Cfdi'; // Permission label
-		$this->rights[$r][4] = 'myobject';
-		$this->rights[$r][5] = 'read'; // In php code, permission will be checked by test if ($user->rights->cfdi->myobject->read)
-		$r++;
-		$this->rights[$r][0] = $this->numero . sprintf("%02d", $r + 1); // Permission id (must not be already used)
-		$this->rights[$r][1] = 'Create/Update objects of Cfdi'; // Permission label
-		$this->rights[$r][4] = 'myobject';
-		$this->rights[$r][5] = 'write'; // In php code, permission will be checked by test if ($user->rights->cfdi->myobject->write)
-		$r++;
-		$this->rights[$r][0] = $this->numero . sprintf("%02d", $r + 1); // Permission id (must not be already used)
-		$this->rights[$r][1] = 'Delete objects of Cfdi'; // Permission label
-		$this->rights[$r][4] = 'myobject';
-		$this->rights[$r][5] = 'delete'; // In php code, permission will be checked by test if ($user->rights->cfdi->myobject->delete)
+		$this->rights[$r][1] = 'View CFDI module (menu, invoice status, diagnostics)'; // Permission label
+		$this->rights[$r][4] = 'read'; // In php code, permission will be checked by test if ($user->rights->cfdi->read)
 		$r++;
 		/* END MODULEBUILDER PERMISSIONS */
 		//add tab Facturas relacionadas  on facture client 
@@ -301,7 +292,7 @@ class modCfdi extends DolibarrModules
 			'langs'=>'cfdi@cfdi', // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
 			'position'=>1000 + $r,
 			'enabled'=>'isModEnabled("cfdi")', // Define condition to show or hide menu entry. Use 'isModEnabled("cfdi")' if entry must be visible if module is enabled.
-			'perms'=>'1', // Use 'perms'=>'$user->hasRight("cfdi", "myobject", "read")' if you want your menu with a permission rules
+			'perms'=>'$user->hasRight("cfdi", "read")', // Only show this menu entry to users with the CFDI read permission
 			'target'=>'',
 			'user'=>2, // 0=Menu for internal users, 1=external users, 2=both
 		);
