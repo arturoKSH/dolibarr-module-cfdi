@@ -235,13 +235,11 @@ if ($runTest) {
 	// ── 3. Tablas de catálogo ──────────────────────────────────────────────
 
 	$catalogTables = array(
-		'llx_usocfdi'                => $langs->trans('CfdiCatalogUsoCfdi'),
-		'llx_FiscalRegimen'          => $langs->trans('CfdiCatalogFiscalRegimen'),
-		'llx_kshtyperelsat'          => $langs->trans('CfdiCatalogTypeRelSat'),
-		'llx_serie'                  => $langs->trans('CfdiCatalogSerie'),
-		'llx_kshCancelcfdi'          => $langs->trans('CfdiCatalogCancelaciones'),
-		'llx_kshacceptordeclinecfdi' => $langs->trans('CfdiCatalogAceptaciones'),
-		'llx_kshcfdirelations'       => $langs->trans('CfdiCatalogRelaciones'),
+		'llx_usocfdi'       => $langs->trans('CfdiCatalogUsoCfdi'),
+		'llx_FiscalRegimen' => $langs->trans('CfdiCatalogFiscalRegimen'),
+		'llx_kshtyperelsat' => $langs->trans('CfdiCatalogTypeRelSat'),
+		'llx_serie'         => $langs->trans('CfdiCatalogSerie'),
+		'llx_kshCancelcfdi' => $langs->trans('CfdiCatalogCancelaciones'),
 	);
 
 	print '<h4>'.$langs->trans('CfdiCatalogTablesTitle').'</h4>';
