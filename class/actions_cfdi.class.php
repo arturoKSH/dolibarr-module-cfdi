@@ -23,6 +23,8 @@
  * Put detailed description here.
  */
 
+require_once __DIR__.'/../lib/cfdi.lib.php';
+
 /**
  * Class ActionsMyModule
  */

@@ -18,51 +18,51 @@
 
   ini_set("soap.wsdl_cache_enabled", "0");
 
+  $stampUrlTest = !empty($conf->global->CFDI_STAMP_URL_TEST) ? $conf->global->CFDI_STAMP_URL_TEST : 'https://develop.timbrado.com.mx/wsTimbrado.asmx?WSDL';
+  $stampUrlProd = !empty($conf->global->CFDI_STAMP_URL_PROD) ? $conf->global->CFDI_STAMP_URL_PROD : 'https://cfdi33.timbrado.com.mx/wsTimbrado.asmx?WSDL';
+  $stampUrl = (!empty($conf->global->CFDI_ENV) && $conf->global->CFDI_ENV === 'prod') ? $stampUrlProd : $stampUrlTest;
 
-  try
-  {  
-      $stampUrlTest = !empty($conf->global->CFDI_STAMP_URL_TEST) ? $conf->global->CFDI_STAMP_URL_TEST : 'https://develop.timbrado.com.mx/wsTimbrado.asmx?WSDL';
-      $stampUrlProd = !empty($conf->global->CFDI_STAMP_URL_PROD) ? $conf->global->CFDI_STAMP_URL_PROD : 'https://cfdi33.timbrado.com.mx/wsTimbrado.asmx?WSDL';
-      $stampUrl = (!empty($conf->global->CFDI_ENV) && $conf->global->CFDI_ENV === 'prod') ? $stampUrlProd : $stampUrlTest;
-      $client = new SoapClient($stampUrl, array('trace' => 1));
-  
-} catch (SoapFault $fault) {
-  
-  trigger_error("SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})", E_USER_ERROR);
-}
-  try
-  {
-   
-    /** Procedimiento para versiones menores a php 8.0 */
-    // $auten = array('UserName' => 'crasa_t', 'Password' => '2x!D-Bf9Ln6=$Gp4');
-    // //$auten = array('UserName' => 'autofac_t', 'Password' => '6Pj!N+5sbQ$4=t8Y');    
-    // $params = array('minOccurs'=>'0', 'maxOccurs'=>'1', 'cfdiBytes' => $sData, 'type'=>'s:base64Binary');
-    // $result = $client->__Call('GeneraTimbre', array('cfdiBytes' => $params), null,
-    // new SoapHeader("https://cfdi.timbrado.com.mx/timbradov2", "AuthenticationHeader", $auten));
-   
-    /**Procedimiento para versiones > a php 8.0 */
-    $auten = array(
-        'UserName' => !empty($conf->global->CFDI_PAC_USER)     ? $conf->global->CFDI_PAC_USER     : '',
-        'Password' => !empty($conf->global->CFDI_PAC_PASSWORD) ? $conf->global->CFDI_PAC_PASSWORD : '',
-    );
-    $params = array('minOccurs'=>'0', 'maxOccurs'=>'1', 'cfdiBytes' => $sData, 'type'=>'s:base64Binary');
+  // Namespace/metodo del PAC: configurables para poder apuntar a otro proveedor con el mismo
+  // contrato SOAP (mismo metodo GeneraTimbre + AuthenticationHeader) sin tocar codigo.
+  $soapNamespace = !empty($conf->global->CFDI_SOAP_NAMESPACE) ? $conf->global->CFDI_SOAP_NAMESPACE : 'https://cfdi.timbrado.com.mx/timbradov2';
+  $soapMethod    = !empty($conf->global->CFDI_SOAP_METHOD)    ? $conf->global->CFDI_SOAP_METHOD    : 'GeneraTimbre';
+
+  $auten = array(
+      'UserName' => !empty($conf->global->CFDI_PAC_USER)     ? $conf->global->CFDI_PAC_USER     : '',
+      'Password' => !empty($conf->global->CFDI_PAC_PASSWORD) ? $conf->global->CFDI_PAC_PASSWORD : '',
+  );
+  $params = array('minOccurs'=>'0', 'maxOccurs'=>'1', 'cfdiBytes' => $sData, 'type'=>'s:base64Binary');
+
+  // Reintentar solo fallas de conexion/SOAP (timeout, servicio caido, etc), nunca errores
+  // de negocio (esos ya vienen en $result y se manejan mas abajo sin reintentar).
+  $maxAttempts = 3;
+  $lastSoapFault = null;
+  $result = null;
+
+  for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
     try {
-      $header = new SoapHeader(
-          "https://cfdi.timbrado.com.mx/timbradov2",
-          "AuthenticationHeader",
-          $auten
-      );
-   
-      // Agregar el encabezado SOAP al cliente
+      $client = new SoapClient($stampUrl, array('trace' => 1));
+      $header = new SoapHeader($soapNamespace, "AuthenticationHeader", $auten);
       $client->__setSoapHeaders($header);
-    
-      // Realizar la llamada al método 'GeneraTimbre'
-      $result = $client->GeneraTimbre($params);
 
-    } catch (SoapFault $e) {
-      // Maneja las excepciones de SOAP aquí
-      echo "Error: " . $e->getMessage();
+      // Realizar la llamada al método configurado (por defecto 'GeneraTimbre')
+      $result = $client->{$soapMethod}($params);
+      $lastSoapFault = null;
+      break;
+    } catch (SoapFault $fault) {
+      $lastSoapFault = $fault;
+      if ($attempt < $maxAttempts) {
+        sleep($attempt); // backoff simple: 1s, 2s
+      }
     }
+  }
+
+  if ($lastSoapFault !== null) {
+    trigger_error("SOAP Fault tras {$maxAttempts} intentos: (faultcode: {$lastSoapFault->faultcode}, faultstring: {$lastSoapFault->faultstring})", E_USER_WARNING);
+    setEventMessages('No se pudo conectar con el PAC despues de '.$maxAttempts.' intentos: '.$lastSoapFault->faultstring, null, 'errors');
+    cfdiLogError($db, 'timbrado', $object->ref, 'SOAP Fault tras '.$maxAttempts.' intentos: '.$lastSoapFault->faultstring, $object->id);
+    return;
+  }
 
     $stamp =  $result->GeneraTimbreResult->Timbre;
     if ($stamp) 
@@ -229,15 +229,12 @@
         if($result->GeneraTimbreResult->Error->Descripcion){
           setEventMessages( $result->GeneraTimbreResult->Error->Descripcion,$object->errors, 'errors');
         }
-       
-        
+        cfdiLogError($db, 'timbrado', $object->ref, $mssg, $object->id);
+
     }
-  } catch (SoapFault $fault) {
-      trigger_error("SOAP Fault: (faultcode: {$fault->faultcode}, faultstring: {$fault->faultstring})", E_USER_ERROR);
-  }
+
 
  
-     
 // function getRfcEmisor($doc){
 //    $RfcEmisor = $doc->getElementsByTagName('Emisor')->item(0);
 //    return $RfcEmisor->getAttribute('Rfc');

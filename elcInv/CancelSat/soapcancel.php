@@ -4,6 +4,7 @@ function CancelaCfdi($db, $ruta)
     global $conf;
 
     $fname = $ruta;
+    $invoiceRef = basename(dirname($ruta)); // .../facture/<ref>/<ref>-SolicitudCancel.xml
     if (!file_exists($fname)) {
         die(PHP_EOL . "File not found" . PHP_EOL . PHP_EOL);
     }
@@ -81,13 +82,13 @@ function CancelaCfdi($db, $ruta)
             <button type="button" class="close" data-dismiss="alert">&times;</button>
             <strong></strong>Error, verifique:  ';
             print_r($result).'</div>';
+            cfdiLogError($db, 'cancelacion', $invoiceRef, 'Respuesta del PAC sin CancelaCFDIsResult: '.print_r($result, true));
         }
-        
+
     } catch (SoapFault $fault2) {
-        echo 'llegue3';
-    exit;
-        trigger_error("SOAP Fault: (faultcode: {$fault2->faultcode}, faultstring: {$fault2->faultstring})", E_USER_ERROR);
-        echo 'error';
+        trigger_error("SOAP Fault: (faultcode: {$fault2->faultcode}, faultstring: {$fault2->faultstring})", E_USER_WARNING);
+        setEventMessages('No se pudo conectar con el PAC para cancelar: '.$fault2->faultstring, null, 'errors');
+        cfdiLogError($db, 'cancelacion', $invoiceRef, 'SOAP Fault: '.$fault2->faultstring);
     }
     
     if (!empty($xml2)) {

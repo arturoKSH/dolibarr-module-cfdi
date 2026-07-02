@@ -7,7 +7,7 @@
  */
 
 $certName = getDolGlobalString('MAIN_INFO_CFDI_CERT_NAME');
-$certPsw  = getDolGlobalString('MAIN_INFO_CFDI_CERT_PSW');
+$certPsw  = dolDecrypt(getDolGlobalString('MAIN_INFO_CFDI_CERT_PSW'));
 $localPht = DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/';
 $xlst = "/xslt/origStr40.xslt";
 
@@ -18,7 +18,7 @@ updCertNum($localPht, $certName);
 function updCertVal($localPht,$certName)
 {
     $txtPath = $localPht.$certName."/Cert.txt";
-    shell_exec("openssl x509 -inform DER -in ".$localPht.$certName."/".$certName.".cer  > ".$txtPath);
+    shell_exec("openssl x509 -inform DER -in ".escapeshellarg($localPht.$certName."/".$certName.".cer")." > ".escapeshellarg($txtPath));
 
     if (!file_exists($txtPath) || filesize($txtPath) == 0) return;
 
@@ -36,7 +36,7 @@ function updCertVal($localPht,$certName)
 function updCertNum($localPht,$certName)
 {
     $txtPath = $localPht.$certName."/Serial.txt";
-    shell_exec("openssl x509 -inform DER -in ".$localPht.$certName."/".$certName.".cer -noout -serial > ".$txtPath);
+    shell_exec("openssl x509 -inform DER -in ".escapeshellarg($localPht.$certName."/".$certName.".cer")." -noout -serial > ".escapeshellarg($txtPath));
 
     if (!file_exists($txtPath) || filesize($txtPath) == 0) return;
 
@@ -59,10 +59,11 @@ function updCertNum($localPht,$certName)
 
 function updValConst($name,$val)
 {
+    global $db;
     $update = "UPDATE ".MAIN_DB_PREFIX."const SET";
-    $update.= "  value = replace(replace('". $val."',CHAR(10),''),CHAR(13),'')";	
-    $update.= " WHERE name = '".$name."' ";
-    
+    $update.= "  value = replace(replace('".$db->escape($val)."',CHAR(10),''),CHAR(13),'')";
+    $update.= " WHERE name = '".$db->escape($name)."' ";
+
     $up = execQry($update);
 }
 
@@ -97,11 +98,11 @@ $fil2=$localPht.$certName."/".$certName.".key.pem";
 echo " nesrc ".$status;
 */
 
-    if (!file_exists($localPht.$certName."/".$certName.".key.pem")) 
-        $salida=shell_exec("openssl pkcs8 -inform DER -in ".$localPht.$certName."/".$certName.".key -passin pass:".$certPsw." -out ".$localPht.$certName."/".$certName.".key.pem");
+    if (!file_exists($localPht.$certName."/".$certName.".key.pem"))
+        $salida=shell_exec("openssl pkcs8 -inform DER -in ".escapeshellarg($localPht.$certName."/".$certName.".key")." -passin ".escapeshellarg("pass:".$certPsw)." -out ".escapeshellarg($localPht.$certName."/".$certName.".key.pem"));
 
     if (!file_exists($localPht.$certName."/".$certName.".cer.pem"))
-        $salida2=shell_exec("openssl x509 -inform DER -outform PEM -in ".$localPht.$certName."/".$certName.".cer -pubkey -out ".$localPht.$certName."/".$certName.".cer.pem");
+        $salida2=shell_exec("openssl x509 -inform DER -outform PEM -in ".escapeshellarg($localPht.$certName."/".$certName.".cer")." -pubkey -out ".escapeshellarg($localPht.$certName."/".$certName.".cer.pem"));
     
 
     //return $localPht.$certName."/".$certName;   

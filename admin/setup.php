@@ -110,33 +110,52 @@ $item->cssClass = 'minwidth300';
 // Ambiente de timbrado
 $currentEnv = !empty($conf->global->CFDI_ENV) ? $conf->global->CFDI_ENV : 'test';
 $item = $formSetup->newItem('CFDI_ENV');
-$item->nameText = 'Ambiente de timbrado';
+$item->nameText = $langs->trans('CfdiEnvLabel');
 $selectHtml  = '<select name="CFDI_ENV" class="flat minwidth200">';
-$selectHtml .= '<option value="test"'.($currentEnv === 'test' ? ' selected' : '').'>Pruebas (Test)</option>';
-$selectHtml .= '<option value="prod"'.($currentEnv === 'prod' ? ' selected' : '').'>Producción</option>';
+$selectHtml .= '<option value="test"'.($currentEnv === 'test' ? ' selected' : '').'>'.$langs->trans('CfdiEnvTest').'</option>';
+$selectHtml .= '<option value="prod"'.($currentEnv === 'prod' ? ' selected' : '').'>'.$langs->trans('CfdiEnvProd').'</option>';
 $selectHtml .= '</select>';
 $item->fieldInputOverride  = $selectHtml;
-$item->fieldOutputOverride = ($currentEnv === 'prod') ? 'Producción' : 'Pruebas (Test)';
+$item->fieldOutputOverride = ($currentEnv === 'prod') ? $langs->trans('CfdiEnvProd') : $langs->trans('CfdiEnvTest');
 
 $item = $formSetup->newItem('CFDI_STAMP_URL_TEST');
-$item->nameText = 'URL timbrado (Pruebas)';
+$item->nameText = $langs->trans('CfdiStampUrlTest');
 $item->cssClass = 'minwidth500';
 $item->fieldAttr = array('placeholder' => 'https://develop.timbrado.com.mx/wsTimbrado.asmx?WSDL');
 
 $item = $formSetup->newItem('CFDI_STAMP_URL_PROD');
-$item->nameText = 'URL timbrado (Producción)';
+$item->nameText = $langs->trans('CfdiStampUrlProd');
 $item->cssClass = 'minwidth500';
 $item->fieldAttr = array('placeholder' => 'https://cfdi33.timbrado.com.mx/wsTimbrado.asmx?WSDL');
 
 $item = $formSetup->newItem('CFDI_CANCEL_URL_TEST');
-$item->nameText = 'URL cancelación (Pruebas)';
+$item->nameText = $langs->trans('CfdiCancelUrlTest');
 $item->cssClass = 'minwidth500';
 $item->fieldAttr = array('placeholder' => 'https://develop.timbrado.com.mx/CancelacionServices/CancelacionServices.asmx?WSDL');
 
 $item = $formSetup->newItem('CFDI_CANCEL_URL_PROD');
-$item->nameText = 'URL cancelación (Producción)';
+$item->nameText = $langs->trans('CfdiCancelUrlProd');
 $item->cssClass = 'minwidth500';
 $item->fieldAttr = array('placeholder' => 'https://cfdi.timbrado.com.mx/CancelacionServices/CancelacionServices.asmx?WSDL');
+
+// Proveedor PAC: solo cambia el contrato SOAP (namespace/metodo) si el nuevo proveedor
+// expone el mismo esquema (GeneraTimbre + AuthenticationHeader). Un PAC con un contrato
+// distinto requiere su propio archivo de timbrado, esto no reemplaza eso.
+$item = $formSetup->newItem('CFDI_PAC_PROVIDER');
+$item->nameText = $langs->trans('CfdiPacProvider');
+$item->cssClass = 'minwidth300';
+$item->fieldAttr = array('placeholder' => 'ateb');
+$item->helpText = $langs->trans('CfdiPacProviderHelp');
+
+$item = $formSetup->newItem('CFDI_SOAP_NAMESPACE');
+$item->nameText = $langs->trans('CfdiSoapNamespace');
+$item->cssClass = 'minwidth500';
+$item->fieldAttr = array('placeholder' => 'https://cfdi.timbrado.com.mx/timbradov2');
+
+$item = $formSetup->newItem('CFDI_SOAP_METHOD');
+$item->nameText = $langs->trans('CfdiSoapMethod');
+$item->cssClass = 'minwidth300';
+$item->fieldAttr = array('placeholder' => 'GeneraTimbre');
 
 
 $setupnotempty += count($formSetup->items);
@@ -255,7 +274,7 @@ if ($action == 'updateMask') {
 
 // ---------- inicio: handler para subir certificado .cer y llave .key ----------
 if ($action == 'savecert' && $user->admin) {
-    // seguridad token opcional
+    // Validacion de token CSRF obligatoria
     if (empty($_REQUEST['token']) || $_REQUEST['token'] !== $_SESSION['newtoken']) {
         setEventMessages($langs->trans('ErrorBadToken'), null, 'errors');
     } else {
@@ -275,46 +294,74 @@ if ($action == 'savecert' && $user->admin) {
             } elseif ($cer['error'] !== UPLOAD_ERR_OK || $key['error'] !== UPLOAD_ERR_OK) {
                 setEventMessages($langs->trans('UploadError'), null, 'errors');
             } else {
-                // Determinar nombre del certificado (basename sin extensión)
-                $certName = pathinfo($cer['name'], PATHINFO_FILENAME);
-                if (empty($certName)) $certName = 'cert_'.time();
+                $cerContent = file_get_contents($cer['tmp_name']);
+                $keyContent = file_get_contents($key['tmp_name']);
 
-                $targetDir = DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/'.$certName.'/';
-                if (!is_dir($targetDir)) {
-                    if (!mkdir($targetDir, 0777, true)) {
-                        setEventMessages($langs->trans('CantCreateDir')." ".$targetDir, null, 'errors');
-                        // evitar continuar si no se puede crear carpeta
-                        header('Location: '.$_SERVER['PHP_SELF']);
-                        exit;
+                // Validar que el .cer sea realmente un certificado X509 (DER o PEM)
+                $certRes = ($cerContent !== false) ? @openssl_x509_read($cerContent) : false;
+                // Validar que el .key sea realmente una llave privada y que la contraseña la abra
+                $pkeyRes = ($keyContent !== false) ? @openssl_pkey_get_private($keyContent, $certPsw) : false;
+
+                if ($certRes === false || $pkeyRes === false) {
+                    setEventMessages($langs->trans('InvalidCertOrPassword'), null, 'errors');
+                } else {
+                    // Nombre saneado del certificado: solo alfanumerico, guion y guion bajo
+                    $certName = preg_replace('/[^A-Za-z0-9_-]/', '', basename(pathinfo($cer['name'], PATHINFO_FILENAME)));
+                    $certName = substr($certName, 0, 64);
+                    if ($certName === '' || $certName === '.' || $certName === '..') {
+                        $certName = 'cert_'.time();
                     }
-					chmod($targetDir, 0755);
-                }
 
-                $dstCer = $targetDir.$certName.'.cer';
-                $dstKey = $targetDir.$certName.'.key';
-
-                $okCer = move_uploaded_file($cer['tmp_name'], $dstCer);
-                $okKey = move_uploaded_file($key['tmp_name'], $dstKey);
-
-                if ($okCer && $okKey) {
-                    // Guardar constantes Dolibarr para usar en el módulo
-                    dolibarr_set_const($db, 'MAIN_INFO_CFDI_CERT_NAME', $certName, 'chaine', 0, '', $conf->entity);
-                    dolibarr_set_const($db, 'MAIN_INFO_CFDI_CERT_PSW', $certPsw, 'chaine', 0, '', $conf->entity);
-
-                    // Extraer y guardar fecha de vencimiento del certificado SAT
-                    $derContent = file_get_contents($dstCer);
-                    if ($derContent !== false) {
-                        $pem = "-----BEGIN CERTIFICATE-----\n".chunk_split(base64_encode($derContent), 64, "\n")."-----END CERTIFICATE-----\n";
-                        $certInfo = @openssl_x509_parse($pem);
-                        if ($certInfo && isset($certInfo['validTo_time_t'])) {
-                            dolibarr_set_const($db, 'MAIN_INFO_CFDI_CERT_EXPIRY_TS', (int)$certInfo['validTo_time_t'], 'chaine', 0, '', $conf->entity);
-                            dolibarr_del_const($db, 'CFDI_CERT_EXPIRY_NOTIF_SENT', $conf->entity);
+                    $targetDir = DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/'.$certName.'/';
+                    if (!is_dir($targetDir)) {
+                        if (!dol_mkdir($targetDir)) {
+                            setEventMessages($langs->trans('CantCreateDir')." ".$targetDir, null, 'errors');
+                            // evitar continuar si no se puede crear carpeta
+                            header('Location: '.$_SERVER['PHP_SELF']);
+                            exit;
                         }
                     }
+                    // Bloquear acceso web directo al directorio de certificados (defensa en profundidad)
+                    $certRootDir = DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/';
+                    if (!file_exists($certRootDir.'.htaccess')) {
+                        file_put_contents($certRootDir.'.htaccess', "Require all denied\nphp_flag engine off\n");
+                    }
 
-                    setEventMessages($langs->trans('FilesSavedOK'), null, 'mesgs');
-                } else {
-                    setEventMessages($langs->trans('CantMoveUploadedFiles'), null, 'errors');
+                    $dstCer = $targetDir.$certName.'.cer';
+                    $dstKey = $targetDir.$certName.'.key';
+
+                    $okCer = move_uploaded_file($cer['tmp_name'], $dstCer);
+                    $okKey = move_uploaded_file($key['tmp_name'], $dstKey);
+
+                    if ($okCer && $okKey) {
+                        // Si habia un certificado anterior con otro nombre, limpiar su carpeta (evita huerfanos)
+                        $oldCertName = getDolGlobalString('MAIN_INFO_CFDI_CERT_NAME');
+                        if (!empty($oldCertName) && $oldCertName !== $certName) {
+                            $oldDir = DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/'.$oldCertName.'/';
+                            if (is_dir($oldDir)) {
+                                dol_delete_dir_recursive($oldDir);
+                            }
+                        }
+
+                        // Guardar constantes Dolibarr para usar en el módulo (password cifrada en reposo)
+                        dolibarr_set_const($db, 'MAIN_INFO_CFDI_CERT_NAME', $certName, 'chaine', 0, '', $conf->entity);
+                        dolibarr_set_const($db, 'MAIN_INFO_CFDI_CERT_PSW', dolEncrypt($certPsw), 'chaine', 0, '', $conf->entity);
+
+                        // Extraer y guardar fecha de vencimiento del certificado SAT
+                        $derContent = file_get_contents($dstCer);
+                        if ($derContent !== false) {
+                            $pem = "-----BEGIN CERTIFICATE-----\n".chunk_split(base64_encode($derContent), 64, "\n")."-----END CERTIFICATE-----\n";
+                            $certInfo = @openssl_x509_parse($pem);
+                            if ($certInfo && isset($certInfo['validTo_time_t'])) {
+                                dolibarr_set_const($db, 'MAIN_INFO_CFDI_CERT_EXPIRY_TS', (int)$certInfo['validTo_time_t'], 'chaine', 0, '', $conf->entity);
+                                dolibarr_del_const($db, 'CFDI_CERT_EXPIRY_NOTIF_SENT', $conf->entity);
+                            }
+                        }
+
+                        setEventMessages($langs->trans('FilesSavedOK'), null, 'mesgs');
+                    } else {
+                        setEventMessages($langs->trans('CantMoveUploadedFiles'), null, 'errors');
+                    }
                 }
             }
         }
@@ -324,6 +371,27 @@ if ($action == 'savecert' && $user->admin) {
     exit;
 }
 // ---------- fin: handler para subir certificado .cer y llave .key ----------
+
+// ---------- inicio: handler para eliminar el certificado configurado ----------
+if ($action == 'deletecert' && $user->admin) {
+    if (empty($_REQUEST['token']) || $_REQUEST['token'] !== $_SESSION['newtoken']) {
+        setEventMessages($langs->trans('ErrorBadToken'), null, 'errors');
+    } else {
+        $certNameToDelete = getDolGlobalString('MAIN_INFO_CFDI_CERT_NAME');
+        if (!empty($certNameToDelete)) {
+            $certDir = DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/'.$certNameToDelete.'/';
+            if (is_dir($certDir)) {
+                dol_delete_dir_recursive($certDir);
+            }
+        }
+        dolibarr_del_const($db, 'MAIN_INFO_CFDI_CERT_NAME', $conf->entity);
+        dolibarr_del_const($db, 'MAIN_INFO_CFDI_CERT_PSW', $conf->entity);
+        setEventMessages($langs->trans('CertDeletedOK'), null, 'mesgs');
+    }
+    header('Location: '.$_SERVER['PHP_SELF']);
+    exit;
+}
+// ---------- fin: handler para eliminar el certificado configurado ----------
 
 
 
@@ -350,6 +418,19 @@ print dol_get_fiche_head($head, 'settings', $langs->trans($page_name), -1, "cfdi
 // Setup page goes here
 echo '<span class="opacitymedium">'.$langs->trans("CfdiSetupPage").'</span><br><br>';
 
+// Alerta de vencimiento del certificado configurado
+$currentCertName = getDolGlobalString('MAIN_INFO_CFDI_CERT_NAME');
+if (!empty($currentCertName)) {
+	$certStatus = cfdiParseCert($currentCertName);
+	if (empty($certStatus['error'])) {
+		if ($certStatus['expired']) {
+			print '<div class="warning">'.sprintf($langs->trans('CertExpiredWarning'), abs($certStatus['daysLeft'])).'</div><br>';
+		} elseif ($certStatus['daysLeft'] <= 30) {
+			print '<div class="warning">'.sprintf($langs->trans('CertExpiringWarning'), $certStatus['daysLeft']).'</div><br>';
+		}
+	}
+}
+
 // Formulario para subir certificado .cer y llave .key
 print '<h4>'.$langs->transnoentities('UploadCertAndKey').'</h4>';
 print '<form method="post" enctype="multipart/form-data" action="'.$_SERVER['PHP_SELF'].'?action=savecert&token='.newToken().'">';
@@ -360,6 +441,12 @@ print '<tr><td>'.$langs->transnoentities('CertPassword').'</td><td><input type="
 print '<tr><td></td><td><button class="butAction" type="submit">'.$langs->transnoentities('Save').'</button></td></tr>';
 print '</table>';
 print '</form>';
+
+if (!empty($currentCertName)) {
+	print '<form method="post" action="'.$_SERVER['PHP_SELF'].'?action=deletecert&token='.newToken().'" onsubmit="return confirm('."'".dol_escape_js($langs->trans('DeleteCertConfirm'))."'".');">';
+	print '<button class="butActionDelete" type="submit">'.$langs->transnoentities('DeleteCert').'</button>';
+	print '</form>';
+}
 print '<br>';
 
 // Mostrar estado del certificado SAT actualmente configurado

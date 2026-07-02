@@ -63,7 +63,7 @@ if($action == 'confirm_CancelSat' && $confirm == 'yes'){
         $uuidRpl = $uuid;
         //$credentials = new Credentials(DOL_DOCUMENT_ROOT.'/elcInv/abc/abc.cer.pem',DOL_DOCUMENT_ROOT.'/elcInv/abc/abc.key.pem','Blgstcscv89');
         $certName = getDolGlobalString('MAIN_INFO_CFDI_CERT_NAME');
-        $certPsw  = getDolGlobalString('MAIN_INFO_CFDI_CERT_PSW');
+        $certPsw  = dolDecrypt(getDolGlobalString('MAIN_INFO_CFDI_CERT_PSW'));
 
         $localPht = DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/'.$certName.'/';
 

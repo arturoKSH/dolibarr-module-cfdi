@@ -74,19 +74,13 @@ if (isset($user->socid) && $user->socid > 0) {
 	$socid = $user->socid;
 }
 
-// Security check (enable the most restrictive one)
-//if ($user->socid > 0) accessforbidden();
-//if ($user->socid > 0) $socid = $user->socid;
-//if (!isModEnabled('cfdi')) {
-//	accessforbidden('Module not enabled');
-//}
-//if (! $user->hasRight('cfdi', 'myobject', 'read')) {
-//	accessforbidden();
-//}
-//restrictedArea($user, 'cfdi', 0, 'cfdi_myobject', 'myobject', '', 'rowid');
-//if (empty($user->admin)) {
-//	accessforbidden('Must be admin');
-//}
+// Security check
+if (!isModEnabled('cfdi')) {
+	accessforbidden('Module not enabled');
+}
+if (!$user->hasRight('cfdi', 'read')) {
+	accessforbidden();
+}
 
 
 /*

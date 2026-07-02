@@ -42,11 +42,104 @@ CantMoveUploadedFiles = Cannot move uploaded files
 InvalidFileType = Invalid file type (accepted: .cer, .pem, .key)
 UploadError = Error uploading file
 MissingFile = Missing certificate or key file
+InvalidCertOrPassword = Invalid certificate/key file or wrong password
+CertDeletedOK = Certificate deleted successfully
+DeleteCertConfirm = Are you sure you want to delete the configured certificate? Stamping will stop working until a new one is uploaded.
+DeleteCert = Delete certificate
+CertExpiringWarning = The digital certificate expires in %s days
+CertExpiredWarning = The digital certificate expired %s days ago
 Timbrar = Stamp CFDI
 ConfirmTimbrar = Do you want to stamp this invoice?
 CancelarCFDI = Cancel CFDI
 ConfirmCancelarCFDI = Do you want to cancel this invoice in the SAT?
 GenerarCFDI = Generate CFDI
+ErrorBadToken = Invalid or expired security token
+
+#
+# PAC / stamping configuration
+#
+CfdiEnvLabel = Stamping environment
+CfdiEnvTest = Test
+CfdiEnvProd = Production
+CfdiStampUrlTest = Stamping URL (Test)
+CfdiStampUrlProd = Stamping URL (Production)
+CfdiCancelUrlTest = Cancellation URL (Test)
+CfdiCancelUrlProd = Cancellation URL (Production)
+CfdiPacProvider = PAC provider (reference)
+CfdiPacProviderHelp = Informational only unless you also adjust the SOAP namespace/method below.
+CfdiSoapNamespace = PAC SOAP namespace
+CfdiSoapMethod = Stamping SOAP method
+
+#
+# Diagnostics page
+#
+CfdiDiagTitle = CFDI Module Diagnostics
+CfdiDiagIntro = Checks that the module installation is complete and external services respond.
+CfdiCurrentConfig = Current Configuration
+CfdiActiveEnv = Active environment
+CfdiActiveStampUrl = Active stamping URL
+CfdiActiveCancelUrl = Active cancellation URL
+NotConfigured = Not configured
+DigitalCertificate = Digital certificate
+RunDiagnostic = Run Diagnostic
+StampServiceConnectivity = Stamping Service Connectivity
+CfdiServiceCol = Service
+CfdiStatusCol = Status
+CfdiTimeCol = Time
+CfdiStamping = Stamping
+CfdiCancellation = Cancellation
+CfdiAccessible = Accessible
+CfdiRespondsNoWsdl = Responds without WSDL
+CfdiNoResponse = No response
+CfdiErrorCol = Error
+CfdiCertStatusTitle = Digital Certificate Status
+CfdiNoCertConfigured = No certificate configured. Upload it in the Settings tab.
+CfdiFieldCol = Field
+CfdiValueCol = Value
+CfdiCertExpiredStatus = EXPIRED %s days ago
+CfdiCertExpiringStatus = Expires in %s days
+CfdiCertValidStatus = Valid (%s days remaining)
+CfdiCertHolder = Holder (CN)
+CfdiValidFrom = Valid from
+CfdiValidTo = Valid until
+CfdiCatalogTablesTitle = Catalog Tables
+CfdiTableCol = Table
+CfdiDescriptionCol = Description
+CfdiExists = Exists
+CfdiRecords = Records
+CfdiCatalogUsoCfdi = CFDI uses (SAT)
+CfdiCatalogFiscalRegimen = Fiscal regimes
+CfdiCatalogTypeRelSat = SAT relationship types
+CfdiCatalogSerie = Folio series
+CfdiCatalogCancelaciones = Registered cancellations
+CfdiCatalogAceptaciones = Acceptances / Rejections
+CfdiCatalogRelaciones = Related CFDIs
+CfdiExtrafieldsFacturasTitle = Invoice Extrafields
+CfdiNameCol = Name
+CfdiLabelCol = Label
+CfdiTypeCol = Type
+CfdiDbColumn = DB column
+CfdiNoExtrafieldsDefined = No extrafields defined for invoices in llx_extrafields.
+
+#
+# Error log page
+#
+CfdiErrorLogTitle = CFDI Error Log
+CfdiErrorLogIntro = Failed stamping and cancellation attempts, to diagnose PAC issues without relying on client screenshots.
+CfdiErrorLogEmpty = No failed attempts recorded.
+CfdiErrorLogTableMissing = Error log table not found. Deactivate and reactivate the CFDI module to create it.
+CfdiErrorLogDateCol = Date
+CfdiErrorLogActionCol = Action
+CfdiErrorLogInvoiceCol = Invoice
+CfdiErrorLogUserCol = User
+CfdiErrorLogMessageCol = Error message
+
+#
+# Extrafields
+#
+ExtrafieldCfdiUuid = CFDI UUID
+ExtrafieldCfdiWarehouse = CFDI Warehouse
+ExtrafieldCfdiPropouse = CFDI Use (SAT)
 
 
 #

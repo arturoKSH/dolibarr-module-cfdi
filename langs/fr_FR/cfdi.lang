@@ -42,11 +42,104 @@ CantMoveUploadedFiles = Impossible de déplacer les fichiers téléchargés
 InvalidFileType = Type de fichier invalide (accepté : .cer, .pem, .key)
 UploadError = Erreur lors du téléchargement
 MissingFile = Fichier certificat ou clé manquant
+InvalidCertOrPassword = Fichier certificat/clé invalide ou mot de passe incorrect
+CertDeletedOK = Certificat supprimé avec succès
+DeleteCertConfirm = Êtes-vous sûr de vouloir supprimer le certificat configuré ? La timbrado cessera de fonctionner jusqu'à ce qu'un nouveau soit téléchargé.
+DeleteCert = Supprimer le certificat
+CertExpiringWarning = Le certificat numérique expire dans %s jours
+CertExpiredWarning = Le certificat numérique a expiré il y a %s jours
 Timbrar = Tamponner CFDI
 ConfirmTimbrar = Voulez-vous tamponner cette facture ?
+ErrorBadToken = Jeton de securite invalide ou expire
 CancelarCFDI = Annuler CFDI
 ConfirmCancelarCFDI = Voulez-vous annuler cette facture au SAT ?
 GenerarCFDI = Générer CFDI
+
+#
+# PAC / stamping configuration
+#
+CfdiEnvLabel = Environnement de tamponnage
+CfdiEnvTest = Test
+CfdiEnvProd = Production
+CfdiStampUrlTest = URL de tamponnage (Test)
+CfdiStampUrlProd = URL de tamponnage (Production)
+CfdiCancelUrlTest = URL d'annulation (Test)
+CfdiCancelUrlProd = URL d'annulation (Production)
+CfdiPacProvider = Fournisseur PAC (référence)
+CfdiPacProviderHelp = Informatif seulement, sauf si vous ajustez aussi le namespace/methode SOAP ci-dessous.
+CfdiSoapNamespace = Namespace SOAP du PAC
+CfdiSoapMethod = Methode SOAP de tamponnage
+
+#
+# Diagnostics page
+#
+CfdiDiagTitle = Diagnostic du module CFDI
+CfdiDiagIntro = Vérifie que l'installation du module est complète et que les services externes répondent.
+CfdiCurrentConfig = Configuration actuelle
+CfdiActiveEnv = Environnement actif
+CfdiActiveStampUrl = URL de tamponnage active
+CfdiActiveCancelUrl = URL d'annulation active
+NotConfigured = Non configuré
+DigitalCertificate = Certificat numérique
+RunDiagnostic = Exécuter le diagnostic
+StampServiceConnectivity = Connectivité des services de tamponnage
+CfdiServiceCol = Service
+CfdiStatusCol = Statut
+CfdiTimeCol = Temps
+CfdiStamping = Tamponnage
+CfdiCancellation = Annulation
+CfdiAccessible = Accessible
+CfdiRespondsNoWsdl = Répond sans WSDL
+CfdiNoResponse = Pas de réponse
+CfdiErrorCol = Erreur
+CfdiCertStatusTitle = Statut du certificat numérique
+CfdiNoCertConfigured = Aucun certificat configuré. Téléversez-le dans l'onglet Configuration.
+CfdiFieldCol = Champ
+CfdiValueCol = Valeur
+CfdiCertExpiredStatus = EXPIRÉ depuis %s jours
+CfdiCertExpiringStatus = Expire dans %s jours
+CfdiCertValidStatus = Valide (%s jours restants)
+CfdiCertHolder = Titulaire (CN)
+CfdiValidFrom = Valide depuis
+CfdiValidTo = Valide jusqu'au
+CfdiCatalogTablesTitle = Tables de catalogue
+CfdiTableCol = Table
+CfdiDescriptionCol = Description
+CfdiExists = Existe
+CfdiRecords = Enregistrements
+CfdiCatalogUsoCfdi = Usages CFDI (SAT)
+CfdiCatalogFiscalRegimen = Régimes fiscaux
+CfdiCatalogTypeRelSat = Types de relation SAT
+CfdiCatalogSerie = Séries de folio
+CfdiCatalogCancelaciones = Annulations enregistrées
+CfdiCatalogAceptaciones = Acceptations / Rejets
+CfdiCatalogRelaciones = CFDI liés
+CfdiExtrafieldsFacturasTitle = Extrafields de facture
+CfdiNameCol = Nom
+CfdiLabelCol = Étiquette
+CfdiTypeCol = Type
+CfdiDbColumn = Colonne BD
+CfdiNoExtrafieldsDefined = Aucun extrafield défini pour les factures dans llx_extrafields.
+
+#
+# Error log page
+#
+CfdiErrorLogTitle = Journal des erreurs CFDI
+CfdiErrorLogIntro = Tentatives echouees de tamponnage et d'annulation, pour diagnostiquer les problemes du PAC sans dependre des captures d'ecran du client.
+CfdiErrorLogEmpty = Aucune tentative echouee enregistree.
+CfdiErrorLogTableMissing = Table du journal d'erreurs introuvable. Desactivez puis reactivez le module CFDI pour la creer.
+CfdiErrorLogDateCol = Date
+CfdiErrorLogActionCol = Action
+CfdiErrorLogInvoiceCol = Facture
+CfdiErrorLogUserCol = Utilisateur
+CfdiErrorLogMessageCol = Message d'erreur
+
+#
+# Extrafields
+#
+ExtrafieldCfdiUuid = UUID CFDI
+ExtrafieldCfdiWarehouse = Entrepôt CFDI
+ExtrafieldCfdiPropouse = Usage CFDI (SAT)
 
 #
 # Page À propos
