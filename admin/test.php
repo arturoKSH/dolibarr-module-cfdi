@@ -212,13 +212,13 @@ if ($runTest) {
 
 			if ($expired) {
 				$certStatusIcon = '<span class="fa fa-times" style="color:red"></span>';
-				$daysHtml = '<span style="color:red;font-weight:bold">'.sprintf($langs->trans('CfdiCertExpiredStatus'), abs($daysLeft)).'</span>';
+				$daysHtml = '<span style="color:red;font-weight:bold">'.$langs->trans('CfdiCertExpiredStatus', abs($daysLeft)).'</span>';
 			} elseif ($daysLeft <= 30) {
 				$certStatusIcon = '<span class="fa fa-exclamation-triangle" style="color:orange"></span>';
-				$daysHtml = '<span style="color:orange;font-weight:bold">'.sprintf($langs->trans('CfdiCertExpiringStatus'), $daysLeft).'</span>';
+				$daysHtml = '<span style="color:orange;font-weight:bold">'.$langs->trans('CfdiCertExpiringStatus', $daysLeft).'</span>';
 			} else {
 				$certStatusIcon = '<span class="fa fa-check" style="color:green"></span>';
-				$daysHtml = '<span style="color:green">'.sprintf($langs->trans('CfdiCertValidStatus'), $daysLeft).'</span>';
+				$daysHtml = '<span style="color:green">'.$langs->trans('CfdiCertValidStatus', $daysLeft).'</span>';
 			}
 
 			print '<tr class="liste_titre"><td width="220">'.$langs->trans('CfdiFieldCol').'</td><td>'.$langs->trans('CfdiValueCol').'</td></tr>';

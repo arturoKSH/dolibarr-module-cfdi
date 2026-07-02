@@ -1,0 +1,5 @@
+# Certificados generados por gen_test_cert.php — no versionar
+*.cer
+*.pem
+*.key
+.htaccess
