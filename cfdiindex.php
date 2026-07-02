@@ -56,6 +56,8 @@ if (!$res) {
 }
 
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formfile.class.php';
+require_once DOL_DOCUMENT_ROOT.'/core/class/CMailFile.class.php';
+require_once DOL_DOCUMENT_ROOT.'/core/lib/admin.lib.php';
 
 // Load translation files required by the page
 $langs->loadLangs(array("cfdi@cfdi"));
@@ -91,7 +93,47 @@ if (isset($user->socid) && $user->socid > 0) {
  * Actions
  */
 
-// None
+// Leer estado del certificado SAT y enviar alerta por email (máximo una vez por día)
+$certName     = getDolGlobalString('MAIN_INFO_CFDI_CERT_NAME');
+$certExpiryTs = (int) getDolGlobalString('MAIN_INFO_CFDI_CERT_EXPIRY_TS');
+$certStatus   = array();
+
+if (!empty($certName) && $certExpiryTs > 0) {
+    $nowTs    = time();
+    $daysLeft = (int) round(($certExpiryTs - $nowTs) / 86400);
+    $expired  = ($nowTs > $certExpiryTs);
+    $certStatus = array(
+        'name'     => $certName,
+        'expiry'   => date('d/m/Y', $certExpiryTs),
+        'daysLeft' => $daysLeft,
+        'expired'  => $expired,
+    );
+
+    // Enviar correo si vence en <= 30 días o ya venció
+    if ($expired || $daysLeft <= 30) {
+        $lastSent = getDolGlobalString('CFDI_CERT_EXPIRY_NOTIF_SENT');
+        if ($lastSent !== date('Y-m-d')) {
+            $sendto = getDolGlobalString('MAIN_INFO_SOCIETE_MAIL');
+            if (empty($sendto)) $sendto = $user->email;
+            if (!empty($sendto)) {
+                $from = getDolGlobalString('MAIN_INFO_SOCIETE_MAIL');
+                if (empty($from)) $from = 'noreply@dolibarr';
+                $subject = $expired
+                    ? 'URGENTE: Certificado SAT VENCIDO — Timbrado bloqueado'
+                    : 'Alerta: Certificado SAT vence en '.$daysLeft.' día'.($daysLeft !== 1 ? 's' : '');
+                $body = $expired
+                    ? "El certificado SAT ({$certName}) del módulo CFDI venció el ".date('d/m/Y', $certExpiryTs).".\n\nEl timbrado de facturas está bloqueado. Renueve el certificado en CFDI > Configuración."
+                    : "El certificado SAT ({$certName}) del módulo CFDI vence el ".date('d/m/Y', $certExpiryTs)." ({$daysLeft} días restantes).\n\nFavor de renovarlo a la brevedad en CFDI > Configuración.";
+                $mail = new CMailFile($subject, $sendto, $from, $body, array(), array(), array(), '', '', 0, -1, '', '', '', '', 'mail');
+                if ($mail->sendfile()) {
+                    dolibarr_set_const($db, 'CFDI_CERT_EXPIRY_NOTIF_SENT', date('Y-m-d'), 'chaine', 0, '', $conf->entity);
+                }
+            }
+        }
+    }
+} elseif (!empty($certName)) {
+    $certStatus = array('name' => $certName, 'expiry' => null, 'daysLeft' => null, 'expired' => false);
+}
 
 
 /*
@@ -104,6 +146,34 @@ $formfile = new FormFile($db);
 llxHeader("", $langs->trans("CfdiArea"));
 
 print load_fiche_titre($langs->trans("CfdiArea"), '', 'cfdi.png@cfdi');
+
+// Banner de estado del certificado SAT
+if (!empty($certStatus)) {
+	if ($certStatus['expired']) {
+		$certColor = '#d9534f'; $certIcon = 'fa-times-circle';
+		$certMsg   = 'VENCIDO — Timbrado bloqueado';
+	} elseif ($certStatus['daysLeft'] !== null && $certStatus['daysLeft'] <= 30) {
+		$certColor = '#f0ad4e'; $certIcon = 'fa-exclamation-triangle';
+		$certMsg   = 'Vence en '.$certStatus['daysLeft'].' día'.($certStatus['daysLeft'] !== 1 ? 's' : '');
+	} else {
+		$certIcon  = 'fa-check-circle';
+		$certColor = ($certStatus['daysLeft'] === null) ? '#f0ad4e' : '#5cb85c';
+		$certMsg   = ($certStatus['daysLeft'] !== null) ? 'Vigente ('.$certStatus['daysLeft'].' días restantes)' : 'Fecha de vencimiento no registrada — vuelva a subir el certificado';
+	}
+	print '<div style="border-left:4px solid '.$certColor.';background:#f9f9f9;padding:10px 15px;margin:0 0 15px 0;border-radius:3px;">';
+	print '<b><span class="fas '.$certIcon.'" style="color:'.$certColor.'"></span> Certificado SAT: '.dol_escape_htmltag($certStatus['name']).'</b>';
+	if ($certStatus['expiry']) {
+		print ' &mdash; Vence: <b>'.dol_escape_htmltag($certStatus['expiry']).'</b>';
+	}
+	print ' <span style="color:'.$certColor.';font-weight:bold;">('.$certMsg.')</span>';
+	print ' <a href="'.dol_buildpath('/cfdi/admin/test.php', 1).'" style="margin-left:10px;font-size:0.9em;">Ver diagnóstico completo</a>';
+	print '</div>';
+} else {
+	print '<div style="border-left:4px solid #d9534f;background:#f9f9f9;padding:10px 15px;margin:0 0 15px 0;border-radius:3px;">';
+	print '<b><span class="fas fa-times-circle" style="color:#d9534f"></span> Certificado SAT: No configurado</b>';
+	print ' &mdash; Configure el certificado en <a href="'.dol_buildpath('/cfdi/admin/setup.php', 1).'">CFDI &gt; Configuración</a>.';
+	print '</div>';
+}
 
 print '<div class="fichecenter"><div class="fichethirdleft">';
 

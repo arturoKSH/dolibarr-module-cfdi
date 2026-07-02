@@ -301,6 +301,17 @@ if ($action == 'savecert' && $user->admin) {
                     dolibarr_set_const($db, 'MAIN_INFO_CFDI_CERT_NAME', $certName, 'chaine', 0, '', $conf->entity);
                     dolibarr_set_const($db, 'MAIN_INFO_CFDI_CERT_PSW', $certPsw, 'chaine', 0, '', $conf->entity);
 
+                    // Extraer y guardar fecha de vencimiento del certificado SAT
+                    $derContent = file_get_contents($dstCer);
+                    if ($derContent !== false) {
+                        $pem = "-----BEGIN CERTIFICATE-----\n".chunk_split(base64_encode($derContent), 64, "\n")."-----END CERTIFICATE-----\n";
+                        $certInfo = @openssl_x509_parse($pem);
+                        if ($certInfo && isset($certInfo['validTo_time_t'])) {
+                            dolibarr_set_const($db, 'MAIN_INFO_CFDI_CERT_EXPIRY_TS', (int)$certInfo['validTo_time_t'], 'chaine', 0, '', $conf->entity);
+                            dolibarr_del_const($db, 'CFDI_CERT_EXPIRY_NOTIF_SENT', $conf->entity);
+                        }
+                    }
+
                     setEventMessages($langs->trans('FilesSavedOK'), null, 'mesgs');
                 } else {
                     setEventMessages($langs->trans('CantMoveUploadedFiles'), null, 'errors');
@@ -350,6 +361,27 @@ print '<tr><td></td><td><button class="butAction" type="submit">'.$langs->transn
 print '</table>';
 print '</form>';
 print '<br>';
+
+// Mostrar estado del certificado SAT actualmente configurado
+$certNameCfg   = getDolGlobalString('MAIN_INFO_CFDI_CERT_NAME');
+$certExpiryCfg = (int) getDolGlobalString('MAIN_INFO_CFDI_CERT_EXPIRY_TS');
+if (!empty($certNameCfg)) {
+    print '<h4>Certificado SAT actual</h4>';
+    print '<table class="border" width="100%">';
+    print '<tr><td width="200">Nombre</td><td>'.dol_escape_htmltag($certNameCfg).'</td></tr>';
+    if ($certExpiryCfg > 0) {
+        $nowTsCfg   = time();
+        $daysCfg    = (int) round(($certExpiryCfg - $nowTsCfg) / 86400);
+        $expiredCfg = ($nowTsCfg > $certExpiryCfg);
+        if ($expiredCfg)          { $clrCfg = '#d9534f'; $lblCfg = 'VENCIDO'; }
+        elseif ($daysCfg <= 30)   { $clrCfg = '#f0ad4e'; $lblCfg = 'Vence en '.$daysCfg.' días'; }
+        else                      { $clrCfg = '#5cb85c'; $lblCfg = 'Vigente'; }
+        print '<tr><td>Vence</td><td><b>'.date('d/m/Y', $certExpiryCfg).'</b> <span style="color:'.$clrCfg.';font-weight:bold;">('.$lblCfg.')</span></td></tr>';
+    } else {
+        print '<tr><td>Vence</td><td><span style="color:#f0ad4e">No registrada — vuelva a subir el certificado para registrar la fecha</span></td></tr>';
+    }
+    print '</table><br>';
+}
 
 if ($action == 'edit') {
 	print $formSetup->generateOutput(true);
