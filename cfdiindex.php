@@ -78,7 +78,7 @@ if (isset($user->socid) && $user->socid > 0) {
 if (!isModEnabled('cfdi')) {
 	accessforbidden('Module not enabled');
 }
-if (!$user->hasRight('cfdi', 'read')) {
+if (!$user->admin && !$user->hasRight('cfdi', 'read')) {
 	accessforbidden();
 }
 
