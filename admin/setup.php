@@ -442,11 +442,6 @@ print '<tr><td></td><td><button class="butAction" type="submit">'.$langs->transn
 print '</table>';
 print '</form>';
 
-if (!empty($currentCertName)) {
-	print '<form method="post" action="'.$_SERVER['PHP_SELF'].'?action=deletecert&token='.newToken().'" onsubmit="return confirm('."'".dol_escape_js($langs->trans('DeleteCertConfirm'))."'".');">';
-	print '<button class="butActionDelete" type="submit">'.$langs->transnoentities('DeleteCert').'</button>';
-	print '</form>';
-}
 print '<br>';
 
 // Mostrar estado del certificado SAT actualmente configurado
@@ -467,6 +462,11 @@ if (!empty($certNameCfg)) {
     } else {
         print '<tr><td>Vence</td><td><span style="color:#f0ad4e">No registrada — vuelva a subir el certificado para registrar la fecha</span></td></tr>';
     }
+    print '<tr><td></td><td style="padding-top:8px">';
+    print '<form method="post" action="'.$_SERVER['PHP_SELF'].'?action=deletecert&token='.newToken().'" onsubmit="return confirm('."'".dol_escape_js($langs->trans('DeleteCertConfirm'))."'".');">';
+    print '<button class="butActionDelete" type="submit">'.$langs->transnoentities('DeleteCert').'</button>';
+    print '</form>';
+    print '</td></tr>';
     print '</table><br>';
 }
 
