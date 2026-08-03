@@ -8,19 +8,84 @@
 
 $active = true;
 
+/**
+ * Ultimo error SQL registrado por excQry(), o cadena vacia si la ultima consulta
+ * salio bien. Permite que un flujo critico (timbrado) aborte en lugar de seguir
+ * con datos incompletos. Ver excQryFailed().
+ */
+$GLOBALS['excQryLastError'] = '';
+
+/**
+ * Ejecuta una consulta y devuelve todas las filas como array asociativo.
+ *
+ * Si la consulta falla no lanza un fatal error: registra el detalle (syslog de
+ * Dolibarr + tabla de errores del modulo), avisa en pantalla y devuelve un array
+ * vacio, de modo que los llamadores puedan asumir siempre un array.
+ *
+ * OJO: un array vacio no distingue "sin resultados" de "la consulta fallo". En un
+ * flujo que arma un CFDI eso importa, porque seguir adelante puede generar un
+ * comprobante con datos faltantes. Para eso esta excQryFailed().
+ *
+ * @param  string $script SQL a ejecutar
+ * @return array          Filas encontradas; array vacio si no hubo o si fallo
+ */
 function excQry($script)
 {
-    global $db; 
-    
-    $resultQry = $db->query($script);    
-    
+    global $db, $user;
+
+    $GLOBALS['excQryLastError'] = '';
+
+    $resultQry = $db->query($script);
+
+    // DoliDB::query() devuelve false cuando la consulta falla. Antes se llamaba
+    // fetch_all() sobre ese false, lo que producia
+    // "Call to a member function fetch_all() on bool" sin dejar rastro del SQL.
+    if ($resultQry === false) {
+        $errno  = $db->lasterrno();
+        $errmsg = $db->lasterror();
+        $detail = 'excQry ['.$errno.'] '.$errmsg;
+
+        $GLOBALS['excQryLastError'] = $detail;
+
+        // Siempre al syslog, con el SQL completo para poder diagnosticar.
+        if (function_exists('dol_syslog')) {
+            dol_syslog('excQry fallo: '.$detail." | SQL: ".$script, LOG_ERR);
+        }
+
+        // Y a la tabla del modulo, para que quede visible en CFDI > Registro de errores.
+        if (function_exists('cfdiLogError')) {
+            cfdiLogError($db, 'sql', '', $detail." | SQL: ".$script, 0);
+        }
+
+        // Aviso en pantalla. El SQL solo se muestra a admin: expone estructura de la base.
+        if (function_exists('setEventMessages')) {
+            $onScreen = !empty($user->admin) ? $detail.' | SQL: '.$script : $detail;
+            setEventMessages($onScreen, null, 'errors');
+        }
+
+        return array();
+    }
+
     $resultObj = $resultQry->fetch_all(MYSQLI_ASSOC);
-    
+
     $resultQry->free();
-    
-    $rtn = $resultObj;
-    
-    return $rtn ;
+
+    // fetch_all() devuelve array, pero normalizamos para que el contrato de retorno
+    // sea siempre array y los llamadores no tengan que revisar el tipo.
+    return is_array($resultObj) ? $resultObj : array();
+}
+
+/**
+ * Indica si la ultima llamada a excQry() fallo por un error de SQL.
+ *
+ * @param  string $errmsg Recibe el detalle del error, si hubo
+ * @return bool           True si la ultima consulta fallo
+ */
+function excQryFailed(&$errmsg = '')
+{
+    $errmsg = isset($GLOBALS['excQryLastError']) ? $GLOBALS['excQryLastError'] : '';
+
+    return ($errmsg !== '');
 }
 
 function getCustInf($Id)
