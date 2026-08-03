@@ -262,13 +262,13 @@ class ActionsCfdi
 				// do timbre in SAT
 				
 				$formconfirm = "";
-				$formconfirm = $form->formconfirm(dol_htmlspecialchars($_SERVER['PHP_SELF']).'?facid='.(int)$object->id, $langs->trans('Timbrar'), $langs->trans('ConfirmTimbrar'), 'confirm_timbre', '', "yes", 2);
+				$formconfirm = $form->formconfirm(dol_escape_htmltag($_SERVER['PHP_SELF']).'?facid='.(int)$object->id, $langs->trans('Timbrar'), $langs->trans('ConfirmTimbrar'), 'confirm_timbre', '', "yes", 2);
 				$this->resprints = $formconfirm;
 			}else if($action == 'CancelSat'){
 				// do timbre in SAT
 				$form_question = $this->questionCancelSAT($object);
 				$formconfirm = "";
-				$formconfirm = $form->formconfirm(dol_htmlspecialchars($_SERVER['PHP_SELF']).'?facid='.(int)$object->id, $langs->trans('CancelarCFDI'), $langs->trans('ConfirmCancelarCFDI'), 'confirm_CancelSat', $form_question, 0, 1, 0);
+				$formconfirm = $form->formconfirm(dol_escape_htmltag($_SERVER['PHP_SELF']).'?facid='.(int)$object->id, $langs->trans('CancelarCFDI'), $langs->trans('ConfirmCancelarCFDI'), 'confirm_CancelSat', $form_question, 0, 1, 0);
 				$this->resprints = $formconfirm;
 			}
 		}
@@ -365,8 +365,8 @@ class ActionsCfdi
 							|| $object->statut == Facture::STATUS_CLOSED) 
 							|| ! empty($conf->global->FACTURE_SENDBYEMAIL_FOR_ALL_STATUS)
 					   ) {
-						print '<div class="inline-block divButAction"><a class="butAction'.($conf->use_javascript_ajax?' reposition':'').'" href="'.dol_htmlspecialchars($_SERVER["PHP_SELF"]).'?facid='.(int)$object->id.'&amp;action=confirm_valid2">'.$langs->trans('GenerarCFDI').'</a></div>';
-						print '<div class="inline-block divButAction"><a class="butAction'.($conf->use_javascript_ajax?' reposition':'').'" href="'.dol_htmlspecialchars($_SERVER["PHP_SELF"]).'?facid='.(int)$object->id.'&amp;action=Timbrar">'.$langs->trans('Timbrar').'</a></div>';
+						print '<div class="inline-block divButAction"><a class="butAction'.($conf->use_javascript_ajax?' reposition':'').'" href="'.dol_escape_htmltag($_SERVER["PHP_SELF"]).'?facid='.(int)$object->id.'&amp;action=confirm_valid2">'.$langs->trans('GenerarCFDI').'</a></div>';
+						print '<div class="inline-block divButAction"><a class="butAction'.($conf->use_javascript_ajax?' reposition':'').'" href="'.dol_escape_htmltag($_SERVER["PHP_SELF"]).'?facid='.(int)$object->id.'&amp;action=Timbrar">'.$langs->trans('Timbrar').'</a></div>';
 							
 					}
 				}else if(!empty($object->array_options['options_uuid'])){
@@ -390,7 +390,7 @@ class ActionsCfdi
 					</script>';
 					/** Evitar que se pueda modificar o Eliminar una Factura Inicio */
 
-					print '<div class="inline-block divButAction"><a class="butAction'.($conf->use_javascript_ajax?' reposition':'').'" href="'.dol_htmlspecialchars($_SERVER["PHP_SELF"]).'?facid='.(int)$object->id.'&amp;action=CancelSat">'.$langs->trans('CancelarCFDI').'</a></div>';
+					print '<div class="inline-block divButAction"><a class="butAction'.($conf->use_javascript_ajax?' reposition':'').'" href="'.dol_escape_htmltag($_SERVER["PHP_SELF"]).'?facid='.(int)$object->id.'&amp;action=CancelSat">'.$langs->trans('CancelarCFDI').'</a></div>';
 				}
 			}
 			

@@ -9,7 +9,9 @@ elcInv/*.txt
 # Dependencias PHP (Composer) - reproducibles con `composer install`
 elcInv/CancelSat/composer/vendor/
 
-# Certificados y llaves fiscales (nunca en git)
+# Certificados y llaves fiscales (nunca en git).
+# Ahora viven en DOL_DATA_ROOT/cfdi/certs/, fuera del repo. Esta entrada se conserva
+# para instalaciones que aun tengan la ruta antigua sin migrar.
 elcInv/cfdi_Cert/
 
 # Archivos de sistema

@@ -12,6 +12,13 @@
  *   test_cert.key.pem  — llave PEM cifrada           → campo "Llave PEM"
  */
 
+// Solo CLI. Sin esto el script es alcanzable por HTTP (no incluye main.inc.php,
+// asi que no hay control de acceso de Dolibarr) y escribe archivos en el arbol web.
+if (PHP_SAPI !== 'cli') {
+    http_response_code(403);
+    die("Este script solo puede ejecutarse por linea de comandos.\n");
+}
+
 if (!extension_loaded('openssl')) {
     die("ERROR: la extensión OpenSSL no está disponible en este PHP.\n");
 }

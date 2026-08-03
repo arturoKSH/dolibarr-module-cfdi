@@ -55,6 +55,8 @@ global $langs, $user;
 // Libraries
 require_once DOL_DOCUMENT_ROOT."/core/lib/admin.lib.php";
 require_once DOL_DOCUMENT_ROOT.'/core/lib/security.lib.php';
+// files.lib.php: dol_delete_dir_recursive() vive aqui y main.inc.php no lo carga.
+require_once DOL_DOCUMENT_ROOT.'/core/lib/files.lib.php';
 require_once '../lib/cfdi.lib.php';
 //require_once "../class/myclass.class.php";
 
@@ -67,6 +69,13 @@ $hookmanager->initHooks(array('cfdisetup', 'globalsetup'));
 // Access control
 if (!$user->admin) {
 	accessforbidden();
+}
+
+// Los certificados se movieron de custom/cfdi/elcInv/cfdi_Cert/ (alcanzable por web)
+// a DOL_DATA_ROOT/cfdi/certs/. Migracion idempotente: solo actua si quedo la ruta antigua.
+$certNameCurrent = getDolGlobalString('MAIN_INFO_CFDI_CERT_NAME');
+if (!empty($certNameCurrent) && cfdiMigrateLegacyCertDir($certNameCurrent)) {
+	setEventMessages($langs->trans('CfdiCertMigratedToDataRoot'), null, 'mesgs');
 }
 
 // Parameters
@@ -337,23 +346,18 @@ if ($action == 'savecert' && $user->admin) {
                         $certName = 'cert_'.time();
                     }
 
-                    $targetDir = DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/'.$certName.'/';
-                    if (!is_dir($targetDir)) {
-                        if (!dol_mkdir($targetDir)) {
-                            setEventMessages($langs->trans('CantCreateDir')." ".$targetDir, null, 'errors');
-                            header('Location: '.$_SERVER['PHP_SELF']);
-                            exit;
-                        }
-                    }
-                    $certRootDir = DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/';
-                    if (!file_exists($certRootDir.'.htaccess')) {
-                        file_put_contents($certRootDir.'.htaccess', "Require all denied\nphp_flag engine off\n");
+                    // Crea el directorio y escribe el .htaccess ANTES de mover los archivos.
+                    $targetDir = cfdiEnsureCertDir($certName);
+                    if ($targetDir === '') {
+                        setEventMessages($langs->trans('CantCreateDir')." ".cfdiCertDir($certName), null, 'errors');
+                        header('Location: '.$_SERVER['PHP_SELF']);
+                        exit;
                     }
 
-                    $dstCer    = $targetDir.$certName.'.cer';
-                    $dstCerPem = $targetDir.$certName.'.cer.pem';
-                    $dstKey    = $targetDir.$certName.'.key';
-                    $dstKeyPem = $targetDir.$certName.'.key.pem';
+                    $dstCer    = cfdiCertFile($certName, '.cer');
+                    $dstCerPem = cfdiCertFile($certName, '.cer.pem');
+                    $dstKey    = cfdiCertFile($certName, '.key');
+                    $dstKeyPem = cfdiCertFile($certName, '.key.pem');
 
                     $okCer    = move_uploaded_file($cer['tmp_name'],    $dstCer);
                     $okCerPem = move_uploaded_file($cerPem['tmp_name'], $dstCerPem);
@@ -364,8 +368,8 @@ if ($action == 'savecert' && $user->admin) {
                         // Si habia un certificado anterior con otro nombre, limpiar su carpeta (evita huerfanos)
                         $oldCertName = getDolGlobalString('MAIN_INFO_CFDI_CERT_NAME');
                         if (!empty($oldCertName) && $oldCertName !== $certName) {
-                            $oldDir = DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/'.$oldCertName.'/';
-                            if (is_dir($oldDir)) {
+                            $oldDir = cfdiCertDir($oldCertName);
+                            if ($oldDir !== '' && is_dir($oldDir)) {
                                 dol_delete_dir_recursive($oldDir);
                             }
                         }
@@ -423,9 +427,14 @@ if ($action == 'deletecert' && $user->admin) {
     } else {
         $certNameToDelete = getDolGlobalString('MAIN_INFO_CFDI_CERT_NAME');
         if (!empty($certNameToDelete)) {
-            $certDir = DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/'.$certNameToDelete.'/';
-            if (is_dir($certDir)) {
+            $certDir = cfdiCertDir($certNameToDelete);
+            if ($certDir !== '' && is_dir($certDir)) {
                 dol_delete_dir_recursive($certDir);
+            }
+            // Limpiar tambien la ruta antigua dentro de custom/ si quedo algo de una version previa.
+            $legacyDir = DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/'.cfdiCertSafeName($certNameToDelete).'/';
+            if (cfdiCertSafeName($certNameToDelete) !== '' && is_dir($legacyDir)) {
+                dol_delete_dir_recursive($legacyDir);
             }
         }
         dolibarr_del_const($db, 'MAIN_INFO_CFDI_CERT_NAME', $conf->entity);
@@ -509,8 +518,8 @@ if ($action == 'downloadfile' && $user->admin) {
             if (!in_array($file, $allowedFiles)) {
                 accessforbidden('Archivo no permitido');
             }
-            $filePath = DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/'.$certNameCfg.'/'.$file;
-            if (!file_exists($filePath)) {
+            $filePath = cfdiCertDir($certNameCfg).$file;
+            if (cfdiCertDir($certNameCfg) === '' || !file_exists($filePath)) {
                 accessforbidden('El archivo no existe en el disco');
             }
             // Stream file download

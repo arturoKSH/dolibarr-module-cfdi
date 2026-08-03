@@ -161,3 +161,6 @@ MyPageName = Nombre de mi página
 #
 MyWidget = Mi widget
 MyWidgetDescription = Descripción de mi widget
+
+# Migracion de certificados a DOL_DATA_ROOT
+CfdiCertMigratedToDataRoot = Los certificados se movieron a un directorio privado fuera de custom/ (DOL_DATA_ROOT/cfdi/certs).

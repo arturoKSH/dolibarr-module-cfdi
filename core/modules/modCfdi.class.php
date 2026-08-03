@@ -437,7 +437,7 @@ class modCfdi extends DolibarrModules
 		$extrafields->addExtraField('uuid', 'ExtrafieldCfdiUuid', 'varchar', 100, 40, 'facture', 0, 0, '', '', 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
 		// Almacen usado para el movimiento de stock al timbrar/cancelar
 		$extrafields->addExtraField('warehouse', 'ExtrafieldCfdiWarehouse', 'sellist', 101, 10, 'facture', 0, 0, '', array('options' => array('entrepot:ref:rowid::' => 'N')), 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
-		// Uso de CFDI (catalogo SAT, ya se instala en llx_usocfdi via sql/cfdi.sql)
+		// Uso de CFDI (catalogo SAT, ya se instala en llx_usocfdi via sql/llx_usocfdi.sql)
 		$extrafields->addExtraField('propouse', 'ExtrafieldCfdiPropouse', 'sellist', 102, 20, 'facture', 0, 0, '', array('options' => array('usocfdi:Descripcion:usocfdi_id::' => 'N')), 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
 		$extrafields->addExtraField('propouse', 'ExtrafieldCfdiPropouse', 'sellist', 1, 20, 'thirdparty', 0, 0, '', array('options' => array('usocfdi:Descripcion:usocfdi_id::' => 'N')), 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
 
