@@ -40,3 +40,13 @@ Este módulo permite la integración de la facturación electrónica **CFDI (Com
 ---
 
 Desarrollado por [Kristal Software House](https://github.com/arturoKSH/dolibarr_zakili).
+
+---
+
+## Notas de prueba del submódulo
+
+Líneas heredadas de la rama `dev`, usadas para verificar que el submódulo se
+actualiza de forma independiente del repositorio padre:
+
+Prueba de que solo actualiza cfdi readme
+prueba 2
