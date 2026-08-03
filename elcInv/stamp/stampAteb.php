@@ -65,10 +65,12 @@ if($action == 'confirm_CancelSat' && $confirm == 'yes'){
         $certName = getDolGlobalString('MAIN_INFO_CFDI_CERT_NAME');
         $certPsw  = dolDecrypt(getDolGlobalString('MAIN_INFO_CFDI_CERT_PSW'));
 
-        $localPht = DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/'.$certName.'/';
+        require_once DOL_DOCUMENT_ROOT.'/custom/cfdi/lib/cfdi.lib.php';
 
-        $cerPem = $localPht.$certName.'.cer.pem';
-        $keyPem = $localPht.$certName.'.key.pem';
+        $localPht = cfdiCertDir($certName);
+
+        $cerPem = cfdiCertFile($certName, '.cer.pem');
+        $keyPem = cfdiCertFile($certName, '.key.pem');
 
         if (empty($certName) || !file_exists($cerPem) || !file_exists($keyPem)) {
             setEventMessages('Certificados SAT no encontrados. Suba el .cer y .key en CFDI > Configuración.', null, 'errors');

@@ -86,6 +86,130 @@ function cfdiAdminPrepareHead()
 }
 
 /**
+ * Sanea un nombre de certificado. Whitelist: solo alfanumerico, guion y guion bajo.
+ * Es la unica funcion que decide que es un nombre valido; el resultado se usa tanto
+ * para el directorio como para el nombre de archivo, para que no puedan divergir.
+ *
+ * @param  string $certName Nombre crudo
+ * @return string           Nombre saneado, cadena vacia si no queda nada utilizable
+ */
+function cfdiCertSafeName($certName)
+{
+	$safe = preg_replace('/[^A-Za-z0-9_-]/', '', basename((string) $certName));
+
+	return (string) substr($safe, 0, 64);
+}
+
+/**
+ * Directorio de certificados CFDI: DOL_DATA_ROOT/cfdi/certs/, no custom/.
+ *
+ * DOL_DATA_ROOT es donde Dolibarr espera los datos privados y en una instalacion
+ * estandar queda fuera del DocumentRoot. OJO: no esta garantizado -- si
+ * $dolibarr_main_data_root apunta dentro del arbol web (p.ej. /var/www/html/documents)
+ * el directorio si es alcanzable por HTTP. Por eso cfdiEnsureCertDir() escribe
+ * siempre un .htaccess, y el despliegue debe blindar documents/ aparte.
+ *
+ * @param  string $certName Nombre del certificado; vacio devuelve el directorio raiz
+ * @return string           Ruta con separador final, cadena vacia si el nombre es invalido
+ */
+function cfdiCertDir($certName = '')
+{
+	$root = DOL_DATA_ROOT.'/cfdi/certs/';
+
+	if ((string) $certName === '') {
+		return $root;
+	}
+
+	$safe = cfdiCertSafeName($certName);
+
+	return ($safe === '') ? '' : $root.$safe.'/';
+}
+
+/**
+ * Ruta completa a un archivo de certificado.
+ *
+ * @param  string $certName Nombre del certificado
+ * @param  string $suffix   Sufijo con punto: '.cer', '.cer.pem', '.key', '.key.pem'
+ * @return string           Ruta absoluta, cadena vacia si el nombre es invalido
+ */
+function cfdiCertFile($certName, $suffix)
+{
+	$dir  = cfdiCertDir($certName);
+	$safe = cfdiCertSafeName($certName);
+
+	return ($dir === '' || $safe === '') ? '' : $dir.$safe.$suffix;
+}
+
+/**
+ * Crea el directorio de certificados si no existe y lo blinda contra acceso web.
+ * DOL_DATA_ROOT ya suele estar fuera del DocumentRoot; el .htaccess es defensa
+ * en profundidad por si alguien lo expone por error.
+ *
+ * @param  string $certName Nombre del certificado
+ * @return string           Directorio creado, cadena vacia si fallo
+ */
+function cfdiEnsureCertDir($certName)
+{
+	$root = cfdiCertDir();
+	$dir  = cfdiCertDir($certName);
+
+	if ($dir === '') {
+		return '';
+	}
+
+	// El .htaccess se escribe antes de mover archivos, no despues.
+	if (!is_dir($root) && !dol_mkdir($root)) {
+		return '';
+	}
+	if (!file_exists($root.'.htaccess')) {
+		file_put_contents($root.'.htaccess', "Require all denied\n");
+	}
+	if (!is_dir($dir) && !dol_mkdir($dir)) {
+		return '';
+	}
+
+	return $dir;
+}
+
+/**
+ * Mueve certificados que quedaron en la ruta antigua dentro de custom/ (web-accessible)
+ * hacia DOL_DATA_ROOT. Idempotente: no hace nada si ya no existe la ruta antigua.
+ *
+ * @param  string $certName Nombre del certificado configurado
+ * @return bool             True si movio algo
+ */
+function cfdiMigrateLegacyCertDir($certName)
+{
+	$safe = cfdiCertSafeName($certName);
+	if ($safe === '') {
+		return false;
+	}
+
+	$legacyDir = DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/'.$safe.'/';
+	$newDir    = cfdiCertDir($safe);
+
+	if (!is_dir($legacyDir) || $newDir === '' || is_dir($newDir)) {
+		return false;
+	}
+	if (cfdiEnsureCertDir($safe) === '') {
+		return false;
+	}
+
+	$moved = false;
+	foreach (array('.cer', '.cer.pem', '.key', '.key.pem') as $suffix) {
+		$src = $legacyDir.$safe.$suffix;
+		if (file_exists($src) && @rename($src, $newDir.$safe.$suffix)) {
+			$moved = true;
+		}
+	}
+	if ($moved) {
+		dol_delete_dir_recursive($legacyDir);
+	}
+
+	return $moved;
+}
+
+/**
  * Lee un .cer (DER o PEM) y devuelve info del certificado o array con error.
  *
  * @param  string $certName Nombre saneado del certificado (ver MAIN_INFO_CFDI_CERT_NAME)
@@ -93,11 +217,14 @@ function cfdiAdminPrepareHead()
  */
 function cfdiParseCert($certName)
 {
-	$base = DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/'.basename($certName).'/';
+	$base = cfdiCertDir($certName);
+	if ($base === '') {
+		return array('error' => 'Nombre de certificado invalido');
+	}
 
 	// Intentar PEM primero, luego convertir DER
-	$pemFile = $base.$certName.'.cer.pem';
-	$derFile = $base.$certName.'.cer';
+	$pemFile = cfdiCertFile($certName, '.cer.pem');
+	$derFile = cfdiCertFile($certName, '.cer');
 
 	$pem = '';
 	if (file_exists($pemFile)) {

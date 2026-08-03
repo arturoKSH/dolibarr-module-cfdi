@@ -360,7 +360,7 @@ foreach ($objdtl as $key => $value2) {
 
 createPem($localPht, $certName, $certPsw);
 
-$orgStr = getOrigStr($localPht, $xml, $xlst);
+$orgStr = getOrigStr($elcInvDir, $xml, $xlst);
 //echo $orgStr;
 $linea = stampStr($localPht, $certName, $orgStr);
 
@@ -428,12 +428,15 @@ function delFilesCFDI($localPht, $certName,$id)
     if (file_exists($pthFiles) ) 
       unlink($pthFiles);
     */
-    $pthFiles = $localPht.$certName."/Serial.txt";
-    if (file_exists($pthFiles) ) 
+    $certDir = cfdiCertDir($certName);
+    if ($certDir === '') return;
+
+    $pthFiles = $certDir."Serial.txt";
+    if (file_exists($pthFiles) )
       unlink($pthFiles);
-    
-    $pthFiles = $localPht.$certName."/Cert.txt";
-    if (file_exists($pthFiles) ) 
+
+    $pthFiles = $certDir."Cert.txt";
+    if (file_exists($pthFiles) )
       unlink($pthFiles);
  
 //    $pthFiles = "./".$id.".txt";

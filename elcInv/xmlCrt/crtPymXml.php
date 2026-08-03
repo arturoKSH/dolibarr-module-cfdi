@@ -262,8 +262,8 @@ if ($action == 'confirm_Cancel_CFDI' && $confirm == 'yes') {
 
     $certN = $conf->global->MAIN_INFO_CFDI_CERT_NAME;
 	$credentials = new Credentials(
-    DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/'.$certN.'/'.$certN.'.cer.pem',
-    DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/'.$certN.'/'.$certN.'.key.pem',
+    cfdiCertFile($certN, '.cer.pem'),
+    cfdiCertFile($certN, '.key.pem'),
     dolDecrypt($conf->global->MAIN_INFO_CFDI_CERT_PSW));
             
             
@@ -794,7 +794,9 @@ if ($action == 'confirm_Cancel_CFDI' && $confirm == 'yes') {
          */
         
         createPem($localPht, $certName, $certPsw);
-        $orgStr = getOrigStr($localPht, $xml, $xlst);
+        // OJO: $xlst viene de stampCfdi.php y apunta a origStr40.xslt (facturas).
+        // Para el complemento de pagos deberia ser /xslt/origStrPym40.xslt -- ver PR.
+        $orgStr = getOrigStr($elcInvDir, $xml, $xlst);
         //print $orgStr;//aoz
         $linea = stampStr($localPht, $certName, $orgStr);
 

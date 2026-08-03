@@ -6,9 +6,15 @@
  * and open the template in the editor.
  */
 
+require_once DOL_DOCUMENT_ROOT.'/custom/cfdi/lib/cfdi.lib.php';
+
 $certName = getDolGlobalString('MAIN_INFO_CFDI_CERT_NAME');
 $certPsw  = dolDecrypt(getDolGlobalString('MAIN_INFO_CFDI_CERT_PSW'));
-$localPht = DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/cfdi_Cert/';
+$localPht = cfdiCertDir();
+// Directorio del modulo: base para los .xslt. Antes se reusaba $localPht (el directorio
+// de certificados), lo que armaba .../cfdi_Cert//xslt/origStr40.xslt -- una ruta inexistente,
+// asi que la cadena original salia vacia y el sello se calculaba sobre nada.
+$elcInvDir = DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv';
 $xlst = "/xslt/origStr40.xslt";
 
 updCertVal($localPht, $certName);
@@ -17,8 +23,11 @@ updCertNum($localPht, $certName);
 
 function updCertVal($localPht,$certName)
 {
-    $txtPath = $localPht.$certName."/Cert.txt";
-    shell_exec("openssl x509 -inform DER -in ".escapeshellarg($localPht.$certName."/".$certName.".cer")." > ".escapeshellarg($txtPath));
+    $certDir = cfdiCertDir($certName);
+    if ($certDir === '') return;
+
+    $txtPath = $certDir."Cert.txt";
+    shell_exec("openssl x509 -inform DER -in ".escapeshellarg(cfdiCertFile($certName, '.cer'))." > ".escapeshellarg($txtPath));
 
     if (!file_exists($txtPath) || filesize($txtPath) == 0) return;
 
@@ -35,8 +44,11 @@ function updCertVal($localPht,$certName)
 
 function updCertNum($localPht,$certName)
 {
-    $txtPath = $localPht.$certName."/Serial.txt";
-    shell_exec("openssl x509 -inform DER -in ".escapeshellarg($localPht.$certName."/".$certName.".cer")." -noout -serial > ".escapeshellarg($txtPath));
+    $certDir = cfdiCertDir($certName);
+    if ($certDir === '') return;
+
+    $txtPath = $certDir."Serial.txt";
+    shell_exec("openssl x509 -inform DER -in ".escapeshellarg(cfdiCertFile($certName, '.cer'))." -noout -serial > ".escapeshellarg($txtPath));
 
     if (!file_exists($txtPath) || filesize($txtPath) == 0) return;
 
@@ -98,18 +110,17 @@ $fil2=$localPht.$certName."/".$certName.".key.pem";
 echo " nesrc ".$status;
 */
 
-    if (!file_exists($localPht.$certName."/".$certName.".key.pem"))
-        $salida=shell_exec("openssl pkcs8 -inform DER -in ".escapeshellarg($localPht.$certName."/".$certName.".key")." -passin ".escapeshellarg("pass:".$certPsw)." -out ".escapeshellarg($localPht.$certName."/".$certName.".key.pem"));
+    if (cfdiCertDir($certName) === '') return;
 
-    if (!file_exists($localPht.$certName."/".$certName.".cer.pem"))
-        $salida2=shell_exec("openssl x509 -inform DER -outform PEM -in ".escapeshellarg($localPht.$certName."/".$certName.".cer")." -pubkey -out ".escapeshellarg($localPht.$certName."/".$certName.".cer.pem"));
-    
+    if (!file_exists(cfdiCertFile($certName, '.key.pem')))
+        $salida=shell_exec("openssl pkcs8 -inform DER -in ".escapeshellarg(cfdiCertFile($certName, '.key'))." -passin ".escapeshellarg("pass:".$certPsw)." -out ".escapeshellarg(cfdiCertFile($certName, '.key.pem')));
 
-    //return $localPht.$certName."/".$certName;   
+    if (!file_exists(cfdiCertFile($certName, '.cer.pem')))
+        $salida2=shell_exec("openssl x509 -inform DER -outform PEM -in ".escapeshellarg(cfdiCertFile($certName, '.cer'))." -pubkey -out ".escapeshellarg(cfdiCertFile($certName, '.cer.pem')));
 }
 function stampStr($localPht, $certName, $orgStr)
 {
-    $keyPem = $localPht.$certName."/".$certName.".key.pem";
+    $keyPem = cfdiCertFile($certName, '.key.pem');
 
     if (!file_exists($keyPem)) return '';
 
