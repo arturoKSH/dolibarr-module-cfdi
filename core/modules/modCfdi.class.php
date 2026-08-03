@@ -83,7 +83,7 @@ class modCfdi extends DolibarrModules
 		// If file is in theme/yourtheme/img directory under name object_pictovalue.png, use this->picto='pictovalue'
 		// If file is in module/img directory under name object_pictovalue.png, use this->picto='pictovalue@module'
 		// To use a supported fa-xxx css style of font awesome, use this->picto='xxx'
-		$this->picto = 'fa-generic';
+		$this->picto = 'file-signature';
 
 		// Define some features supported by module (triggers, login, substitutions, menus, css, etc...)
 		$this->module_parts = array(
@@ -264,26 +264,17 @@ class modCfdi extends DolibarrModules
 		// Permissions provided by this module
 		$this->rights = array();
 		$r = 0;
-		// Add here entries to declare new permissions
-		/* BEGIN MODULEBUILDER PERMISSIONS */
+		// Real permission actually checked by the module (menu entry, cfdiindex.php): $user->rights->cfdi->read
+		// The previous 'myobject'-based read/write/delete permissions here were unused ModuleBuilder
+		// placeholders (no MyObject card/list pages exist in this module) and never matched what the
+		// code actually checks, so they are replaced instead of kept alongside.
 		$this->rights[$r][0] = $this->numero . sprintf("%02d", $r + 1); // Permission id (must not be already used)
-		$this->rights[$r][1] = 'Read objects of Cfdi'; // Permission label
-		$this->rights[$r][4] = 'myobject';
-		$this->rights[$r][5] = 'read'; // In php code, permission will be checked by test if ($user->rights->cfdi->myobject->read)
-		$r++;
-		$this->rights[$r][0] = $this->numero . sprintf("%02d", $r + 1); // Permission id (must not be already used)
-		$this->rights[$r][1] = 'Create/Update objects of Cfdi'; // Permission label
-		$this->rights[$r][4] = 'myobject';
-		$this->rights[$r][5] = 'write'; // In php code, permission will be checked by test if ($user->rights->cfdi->myobject->write)
-		$r++;
-		$this->rights[$r][0] = $this->numero . sprintf("%02d", $r + 1); // Permission id (must not be already used)
-		$this->rights[$r][1] = 'Delete objects of Cfdi'; // Permission label
-		$this->rights[$r][4] = 'myobject';
-		$this->rights[$r][5] = 'delete'; // In php code, permission will be checked by test if ($user->rights->cfdi->myobject->delete)
+		$this->rights[$r][1] = 'View CFDI module (menu, invoice status, diagnostics)'; // Permission label
+		$this->rights[$r][4] = 'read'; // In php code, permission will be checked by test if ($user->rights->cfdi->read)
 		$r++;
 		/* END MODULEBUILDER PERMISSIONS */
 		//add tab Facturas relacionadas  on facture client 
-		$this->tabs = array('invoice:+facsrel:Facturas relacionadas:mylangfile@cfdi:$user->rights->facture->lire:/elcInv/compta/facsrel.php?facid=__ID__'); 
+		$this->tabs = array('invoice:+facsrel:Facturas relacionadas:mylangfile@cfdi:$user->rights->facture->lire:/custom/cfdi/compta/facsrel.php?facid=__ID__'); 
 		
 		// Main menu entries to add
 		$this->menu = array();
@@ -301,7 +292,7 @@ class modCfdi extends DolibarrModules
 			'langs'=>'cfdi@cfdi', // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
 			'position'=>1000 + $r,
 			'enabled'=>'isModEnabled("cfdi")', // Define condition to show or hide menu entry. Use 'isModEnabled("cfdi")' if entry must be visible if module is enabled.
-			'perms'=>'1', // Use 'perms'=>'$user->hasRight("cfdi", "myobject", "read")' if you want your menu with a permission rules
+			'perms'=>'$user->hasRight("cfdi", "read")', // Only show this menu entry to users with the CFDI read permission
 			'target'=>'',
 			'user'=>2, // 0=Menu for internal users, 1=external users, 2=both
 		);
@@ -436,14 +427,19 @@ class modCfdi extends DolibarrModules
 			return -1; // Do not activate module if error 'not allowed' returned when loading module SQL queries (the _load_table run sql with run_sql with the error allowed parameter set to 'default')
 		}
 
-		// Create extrafields during init
-		//include_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
-		//$extrafields = new ExtraFields($this->db);
-		//$result1=$extrafields->addExtraField('cfdi_myattr1', "New Attr 1 label", 'boolean', 1,  3, 'thirdparty',   0, 0, '', '', 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
-		//$result2=$extrafields->addExtraField('cfdi_myattr2', "New Attr 2 label", 'varchar', 1, 10, 'project',      0, 0, '', '', 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
-		//$result3=$extrafields->addExtraField('cfdi_myattr3', "New Attr 3 label", 'varchar', 1, 10, 'bank_account', 0, 0, '', '', 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
-		//$result4=$extrafields->addExtraField('cfdi_myattr4', "New Attr 4 label", 'select',  1,  3, 'thirdparty',   0, 1, '', array('options'=>array('code1'=>'Val1','code2'=>'Val2','code3'=>'Val3')), 1,'', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
-		//$result5=$extrafields->addExtraField('cfdi_myattr5', "New Attr 5 label", 'text',    1, 10, 'user',         0, 0, '', '', 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
+		// Create extrafields during init.
+		// These are the extrafields the module's own code reads/writes at runtime
+		// (options_uuid, options_warehouse, options_propouse) but that were never
+		// declared here before, so a fresh install had no way to create them.
+		include_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
+		$extrafields = new ExtraFields($this->db);
+		// UUID del CFDI timbrado (llenado por el modulo despues de timbrar la factura)
+		$extrafields->addExtraField('uuid', 'ExtrafieldCfdiUuid', 'varchar', 100, 40, 'facture', 0, 0, '', '', 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
+		// Almacen usado para el movimiento de stock al timbrar/cancelar
+		$extrafields->addExtraField('warehouse', 'ExtrafieldCfdiWarehouse', 'sellist', 101, 10, 'facture', 0, 0, '', array('options' => array('entrepot:ref:rowid::' => 'N')), 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
+		// Uso de CFDI (catalogo SAT, ya se instala en llx_usocfdi via sql/llx_usocfdi.sql)
+		$extrafields->addExtraField('propouse', 'ExtrafieldCfdiPropouse', 'sellist', 102, 20, 'facture', 0, 0, '', array('options' => array('usocfdi:Descripcion:usocfdi_id::' => 'N')), 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
+		$extrafields->addExtraField('propouse', 'ExtrafieldCfdiPropouse', 'sellist', 1, 20, 'thirdparty', 0, 0, '', array('options' => array('usocfdi:Descripcion:usocfdi_id::' => 'N')), 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
 
 		// Permissions
 		$this->remove($options);

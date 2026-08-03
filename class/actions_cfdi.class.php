@@ -23,6 +23,8 @@
  * Put detailed description here.
  */
 
+require_once __DIR__.'/../lib/cfdi.lib.php';
+
 /**
  * Class ActionsMyModule
  */
@@ -107,18 +109,24 @@ class ActionsCfdi
 				$this->buildCFDI($object);
 			}else if($action == 'confirm_timbre'){
 				// do timbre in SAT
-			
+
 				$result = $this->stampCfdi($object);
 				if($result == 1){ //condicion de que si se cumple el timbrado
-					require_once DOL_DOCUMENT_ROOT."/custom/createevents/events.class.php";
-					$actioncomm = new events($db);
-					$actioncomm->createActionBillTimbre($user, $object);
+					$eventsFile = DOL_DOCUMENT_ROOT."/custom/createevents/events.class.php";
+					if (file_exists($eventsFile)) {
+						require_once $eventsFile;
+						$actioncomm = new events($db);
+						$actioncomm->createActionBillTimbre($user, $object);
+					}
 				}
-				
+
 			}else if($action == 'confirm_CancelSat' && GETPOST('confirm', 'alpha') == 'yes' ){
-				require_once DOL_DOCUMENT_ROOT."/custom/createevents/events.class.php";
-				$actioncomm = new events($db);
-				$actioncomm->createActionBillCancel($user, $object);
+				$eventsFile = DOL_DOCUMENT_ROOT."/custom/createevents/events.class.php";
+				if (file_exists($eventsFile)) {
+					require_once $eventsFile;
+					$actioncomm = new events($db);
+					$actioncomm->createActionBillCancel($user, $object);
+				}
 				$this->buildCFDICancel($object,$action);
 			}
 			
@@ -148,7 +156,7 @@ class ActionsCfdi
 		$db = $this->db;
 		
 		$timbre=0;
-		include(DOL_DOCUMENT_ROOT.'/elcInv/stamp/ateb.php');
+		include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/stamp/ateb.php');
 		// echo 'aaaaaaa';
 		if (empty($conf->global->MAIN_DISABLE_PDF_AUTOUPDATE)){
 			$outputlangs = $langs;
@@ -208,7 +216,7 @@ class ActionsCfdi
         // set variables need field crtInvXml.php
         $id = $object->id;
         $db = $this->db;
-        include(DOL_DOCUMENT_ROOT.'/elcInv/xmlCrt/crtInvXml.php');
+        include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/xmlCrt/crtInvXml.php');
 
 
     }
@@ -223,8 +231,8 @@ class ActionsCfdi
         $db = $this->db;
 
 		$confirm =  GETPOST('confirm', 'alpha');
-		require DOL_DOCUMENT_ROOT.'/elcInv/CancelSat/composer/vendor/autoload.php';
-        include(DOL_DOCUMENT_ROOT.'/elcInv/stamp/stampAteb.php');
+		require DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/CancelSat/composer/vendor/autoload.php';
+        include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/stamp/stampAteb.php');
 		$result = $this->StockCfdi($user,$langs,$object->array_options['options_warehouse'],$object->lines);
 
     }
@@ -254,13 +262,13 @@ class ActionsCfdi
 				// do timbre in SAT
 				
 				$formconfirm = "";
-				$formconfirm = $form->formconfirm($_SERVER['PHP_SELF'] . '?facid=' . $object->id, "Timbrar", "¿Desea Timbrar esta factura?", 'confirm_timbre', '', "yes", 2);
+				$formconfirm = $form->formconfirm(dol_escape_htmltag($_SERVER['PHP_SELF']).'?facid='.(int)$object->id, $langs->trans('Timbrar'), $langs->trans('ConfirmTimbrar'), 'confirm_timbre', '', "yes", 2);
 				$this->resprints = $formconfirm;
 			}else if($action == 'CancelSat'){
 				// do timbre in SAT
 				$form_question = $this->questionCancelSAT($object);
 				$formconfirm = "";
-				$formconfirm = $form->formconfirm($_SERVER['PHP_SELF'] . '?facid=' . $object->id, "Cancelar", "¿Desea cancelar esta factura en el SAT?", 'confirm_CancelSat', $form_question, 0, 1,0);
+				$formconfirm = $form->formconfirm(dol_escape_htmltag($_SERVER['PHP_SELF']).'?facid='.(int)$object->id, $langs->trans('CancelarCFDI'), $langs->trans('ConfirmCancelarCFDI'), 'confirm_CancelSat', $form_question, 0, 1, 0);
 				$this->resprints = $formconfirm;
 			}
 		}
@@ -309,8 +317,11 @@ class ActionsCfdi
         $sql.= " and b.uuid is not null ";
         $sql.= " order by a.rowid desc ";
 
-        $uuid=$db->query($sql);
-        $objUuid=$uuid->fetch_all(MYSQLI_ASSOC);		                
+        $resUuid = $db->query($sql);
+        $objUuid = array();
+        while ($rowUuid = $db->fetch_object($resUuid)) {
+            $objUuid[] = (array) $rowUuid;
+        }
         $uuidArray = array();
 
         foreach ($objUuid as $key => $value) {                    
@@ -354,8 +365,8 @@ class ActionsCfdi
 							|| $object->statut == Facture::STATUS_CLOSED) 
 							|| ! empty($conf->global->FACTURE_SENDBYEMAIL_FOR_ALL_STATUS)
 					   ) {
-						print '<div class="inline-block divButAction"><a class="butAction'.($conf->use_javascript_ajax?' reposition':'').'" href="' . $_SERVER["PHP_SELF"] . '?facid=' . $object->id . '&amp;action=confirm_valid2">' . $langs->trans('Generar CFDI ') . '</a></div>';    
-						print '<div class="inline-block divButAction"><a class="butAction'.($conf->use_javascript_ajax?' reposition':'').'" href="' . $_SERVER["PHP_SELF"] . '?facid=' . $object->id . '&amp;action=Timbrar">' . $langs->trans('Timbrar') . '</a></div>';
+						print '<div class="inline-block divButAction"><a class="butAction'.($conf->use_javascript_ajax?' reposition':'').'" href="'.dol_escape_htmltag($_SERVER["PHP_SELF"]).'?facid='.(int)$object->id.'&amp;action=confirm_valid2">'.$langs->trans('GenerarCFDI').'</a></div>';
+						print '<div class="inline-block divButAction"><a class="butAction'.($conf->use_javascript_ajax?' reposition':'').'" href="'.dol_escape_htmltag($_SERVER["PHP_SELF"]).'?facid='.(int)$object->id.'&amp;action=Timbrar">'.$langs->trans('Timbrar').'</a></div>';
 							
 					}
 				}else if(!empty($object->array_options['options_uuid'])){
@@ -379,7 +390,7 @@ class ActionsCfdi
 					</script>';
 					/** Evitar que se pueda modificar o Eliminar una Factura Inicio */
 
-					print '<div class="inline-block divButAction"><a class="butAction'.($conf->use_javascript_ajax?' reposition':'').'" href="' . $_SERVER["PHP_SELF"] . '?facid=' . $object->id . '&amp;action=CancelSat">' . $langs->trans('Cancelar CFDI') . '</a></div>';
+					print '<div class="inline-block divButAction"><a class="butAction'.($conf->use_javascript_ajax?' reposition':'').'" href="'.dol_escape_htmltag($_SERVER["PHP_SELF"]).'?facid='.(int)$object->id.'&amp;action=CancelSat">'.$langs->trans('CancelarCFDI').'</a></div>';
 				}
 			}
 			

@@ -1,0 +1,166 @@
+# Copyright (C) 2023 Admin SuperAdmin <orasles@orasles.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+#
+# Generic
+#
+
+# Module label 'ModuleCfdiName'
+ModuleCfdiName = CFDI
+# Module description 'ModuleCfdiDesc'
+ModuleCfdiDesc = Descripción de Cfdi
+
+#
+# Admin page
+#
+CfdiSetup = Configuración de Cfdi
+Settings = Configuración
+CfdiSetupPage = Página de configuración de Cfdi
+CfdiPacUser = Usuario PAC
+CfdiPacPassword = Contraseña PAC
+CFDI_PAC_USER = Usuario PAC
+CFDI_PAC_PASSWORD = Contraseña PAC
+UploadCertAndKey = Subir Certificado y Llave
+CertFile (.cer) = Archivo certificado (.cer)
+KeyFile (.key) = Archivo llave (.key)
+CertPassword = Contraseña del certificado
+FilesSavedOK = Archivos guardados correctamente
+CantCreateDir = No se pudo crear el directorio
+CantMoveUploadedFiles = No se pudieron mover los archivos subidos
+InvalidFileType = Tipo de archivo inválido (se acepta: .cer, .pem, .key)
+UploadError = Error al subir el archivo
+MissingFile = Falta el archivo de certificado o llave
+InvalidCertOrPassword = Archivo de certificado/llave inválido o contraseña incorrecta
+CertDeletedOK = Certificado eliminado correctamente
+DeleteCertConfirm = ¿Seguro que deseas eliminar el certificado configurado? El timbrado dejará de funcionar hasta que subas uno nuevo.
+DeleteCert = Eliminar certificado
+CertExpiringWarning = El certificado digital vence en %s días
+CertExpiredWarning = El certificado digital venció hace %s días
+Timbrar = Timbrar CFDI
+ConfirmTimbrar = ¿Desea timbrar esta factura?
+ErrorBadToken = Token de seguridad inválido o expirado
+CancelarCFDI = Cancelar CFDI
+ConfirmCancelarCFDI = ¿Desea cancelar esta factura en el SAT?
+GenerarCFDI = Generar CFDI
+
+#
+# PAC / stamping configuration
+#
+CfdiEnvLabel = Ambiente de timbrado
+CfdiEnvTest = Pruebas (Test)
+CfdiEnvProd = Producción
+CfdiStampUrlTest = URL timbrado (Pruebas)
+CfdiStampUrlProd = URL timbrado (Producción)
+CfdiCancelUrlTest = URL cancelación (Pruebas)
+CfdiCancelUrlProd = URL cancelación (Producción)
+CfdiPacProvider = Proveedor PAC (referencia)
+CfdiPacProviderHelp = Solo informativo salvo que también ajustes namespace/método SOAP abajo.
+CfdiSoapNamespace = Namespace SOAP del PAC
+CfdiSoapMethod = Método SOAP de timbrado
+
+#
+# Diagnostics page
+#
+CfdiDiagTitle = Diagnóstico del Módulo CFDI
+CfdiDiagIntro = Verifica que la instalación del módulo esté completa y los servicios externos respondan.
+CfdiCurrentConfig = Configuración Actual
+CfdiActiveEnv = Ambiente activo
+CfdiActiveStampUrl = URL timbrado activa
+CfdiActiveCancelUrl = URL cancelación activa
+NotConfigured = No configurado
+DigitalCertificate = Certificado digital
+RunDiagnostic = Ejecutar Diagnóstico
+StampServiceConnectivity = Conectividad con Servicios de Timbrado
+CfdiServiceCol = Servicio
+CfdiStatusCol = Estado
+CfdiTimeCol = Tiempo
+CfdiStamping = Timbrado
+CfdiCancellation = Cancelación
+CfdiAccessible = Accesible
+CfdiRespondsNoWsdl = Responde sin WSDL
+CfdiNoResponse = Sin respuesta
+CfdiErrorCol = Error
+CfdiCertStatusTitle = Estado del Certificado Digital
+CfdiNoCertConfigured = No hay certificado configurado. Súbelo en la pestaña Configuración.
+CfdiFieldCol = Campo
+CfdiValueCol = Valor
+CfdiCertExpiredStatus = VENCIDO hace %s días
+CfdiCertExpiringStatus = Vence en %s días
+CfdiCertValidStatus = Vigente (%s días restantes)
+CfdiCertHolder = Titular (CN)
+CfdiValidFrom = Válido desde
+CfdiValidTo = Válido hasta
+CfdiCatalogTablesTitle = Tablas de Catálogo
+CfdiTableCol = Tabla
+CfdiDescriptionCol = Descripción
+CfdiExists = Existe
+CfdiRecords = Registros
+CfdiCatalogUsoCfdi = Usos de CFDI (SAT)
+CfdiCatalogFiscalRegimen = Regímenes Fiscales
+CfdiCatalogTypeRelSat = Tipos de Relación SAT
+CfdiCatalogSerie = Series de Folio
+CfdiCatalogCancelaciones = Cancelaciones registradas
+CfdiCertHistoryTitle = Historial de certificados
+CfdiConfirmPwdTitle = Confirmar identidad
+CfdiConfirmPwdBody = Por seguridad, ingresa tu contraseña de Dolibarr para guardar el certificado.
+CfdiConfirmPwdError = Contraseña de confirmación incorrecta.
+CfdiExtrafieldsFacturasTitle = Extrafields en Facturas
+CfdiNameCol = Nombre
+CfdiLabelCol = Etiqueta
+CfdiTypeCol = Tipo
+CfdiDbColumn = Columna en BD
+CfdiNoExtrafieldsDefined = No hay extrafields definidos para facturas en llx_extrafields.
+
+#
+# Error log page
+#
+CfdiErrorLogTitle = Registro de Errores CFDI
+CfdiErrorLogIntro = Intentos fallidos de timbrado y cancelación, para diagnosticar problemas con el PAC sin depender de que el cliente mande capturas de pantalla.
+CfdiErrorLogEmpty = No hay intentos fallidos registrados.
+CfdiErrorLogTableMissing = No se encontró la tabla del registro de errores. Desactiva y reactiva el módulo CFDI para crearla.
+CfdiErrorLogDateCol = Fecha
+CfdiErrorLogActionCol = Acción
+CfdiErrorLogInvoiceCol = Factura
+CfdiErrorLogUserCol = Usuario
+CfdiErrorLogMessageCol = Mensaje de error
+
+#
+# Extrafields
+#
+ExtrafieldCfdiUuid = UUID del CFDI
+ExtrafieldCfdiWarehouse = Almacén CFDI
+ExtrafieldCfdiPropouse = Uso de CFDI (SAT)
+
+#
+# About page
+#
+About = Acerca de
+CfdiAbout = Acerca de Cfdi
+CfdiAboutPage = Página acerca de Cfdi
+
+#
+# Sample page
+#
+CfdiArea = Inicio Cfdi
+MyPageName = Nombre de mi página
+
+#
+# Sample widget
+#
+MyWidget = Mi widget
+MyWidgetDescription = Descripción de mi widget
+
+# Migracion de certificados a DOL_DATA_ROOT
+CfdiCertMigratedToDataRoot = Los certificados se movieron a un directorio privado fuera de custom/ (DOL_DATA_ROOT/cfdi/certs).

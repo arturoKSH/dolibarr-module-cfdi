@@ -1,0 +1,29 @@
+# Dolibarr module CFDI - .gitignore
+
+# Caché generada por phpqrcode (se regenera automáticamente)
+elcInv/phpqrcode/cache/
+
+# Archivos temporales del módulo
+elcInv/*.txt
+
+# Dependencias PHP (Composer) - reproducibles con `composer install`
+elcInv/CancelSat/composer/vendor/
+
+# Certificados y llaves fiscales (nunca en git).
+# Ahora viven en DOL_DATA_ROOT/cfdi/certs/, fuera del repo. Esta entrada se conserva
+# para instalaciones que aun tengan la ruta antigua sin migrar.
+elcInv/cfdi_Cert/
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log

@@ -1,0 +1,183 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "bbad047ac281f289d586d43727653a20",
+    "packages": [
+        {
+            "name": "eclipxe/enum",
+            "version": "v0.2.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/eclipxe13/enum.git",
+                "reference": "08048fe76ea01be059d49757e832f460de53b342"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/eclipxe13/enum/zipball/08048fe76ea01be059d49757e832f460de53b342",
+                "reference": "08048fe76ea01be059d49757e832f460de53b342",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.2"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^2.4",
+                "phpstan/phpstan": "^0.12",
+                "phpunit/phpunit": "^8.0",
+                "psalm/phar": "^3.7",
+                "squizlabs/php_codesniffer": "^3.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Eclipxe\\Enum\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Carlos C Soto",
+                    "email": "eclipxe13@gmail.com",
+                    "homepage": "http://eclipxe.com.mx/"
+                }
+            ],
+            "description": "Enum based on the Brent Roose enum idea https://stitcher.io/blog/php-enums",
+            "homepage": "https://github.com/eclipxe13/enum",
+            "keywords": [
+                "enum",
+                "reflection"
+            ],
+            "time": "2020-01-09T17:54:47+00:00"
+        },
+        {
+            "name": "phpcfdi/credentials",
+            "version": "v1.1.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/phpcfdi/credentials.git",
+                "reference": "99bea9a271e8324f25351a0e8874e6cd761d846e"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/phpcfdi/credentials/zipball/99bea9a271e8324f25351a0e8874e6cd761d846e",
+                "reference": "99bea9a271e8324f25351a0e8874e6cd761d846e",
+                "shasum": ""
+            },
+            "require": {
+                "eclipxe/enum": "^0.2.0",
+                "ext-mbstring": "*",
+                "ext-openssl": "*",
+                "php": ">=7.2"
+            },
+            "require-dev": {
+                "ext-json": "*",
+                "friendsofphp/php-cs-fixer": "^2.4",
+                "phpstan/phpstan": "^0.12",
+                "phpunit/phpunit": "^8.4",
+                "squizlabs/php_codesniffer": "^3.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "PhpCfdi\\Credentials\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "phpCfdi",
+                    "email": "contact@phpcfdi.com",
+                    "homepage": "https://www.phpcfdi.com/"
+                }
+            ],
+            "description": "Library to use eFirma (fiel) and CSD (sellos) from SAT",
+            "homepage": "https://github.com/phpcfdi/credentials",
+            "keywords": [
+                "certificado",
+                "cfdi",
+                "efirma",
+                "fiel",
+                "sat",
+                "sello"
+            ],
+            "time": "2020-12-21T03:06:48+00:00"
+        },
+        {
+            "name": "phpcfdi/xml-cancelacion",
+            "version": "v1.1.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/phpcfdi/xml-cancelacion.git",
+                "reference": "c1bfa205a4e4c7ddc8910ea13a18b5c957d2cfe9"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/phpcfdi/xml-cancelacion/zipball/c1bfa205a4e4c7ddc8910ea13a18b5c957d2cfe9",
+                "reference": "c1bfa205a4e4c7ddc8910ea13a18b5c957d2cfe9",
+                "shasum": ""
+            },
+            "require": {
+                "eclipxe/enum": "^0.2",
+                "ext-dom": "*",
+                "ext-openssl": "*",
+                "php": ">=7.2",
+                "phpcfdi/credentials": "^1.1.1"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^2.4",
+                "phpstan/phpstan": "^0.12",
+                "phpunit/phpunit": "^8.3.5",
+                "robrichards/xmlseclibs": "^3.1.0",
+                "squizlabs/php_codesniffer": "^3.0"
+            },
+            "suggest": {
+                "robrichards/xmlseclibs": "Create document signatures (partially) using xmlseclibs"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "PhpCfdi\\XmlCancelacion\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Carlos C Soto",
+                    "email": "eclipxe13@gmail.com"
+                }
+            ],
+            "description": "Genera documentos de cancelación de CFDI firmados (XMLSEC)",
+            "homepage": "https://github.com/phpcfdi/xml-cancelacion",
+            "keywords": [
+                "PeticionConsultaRelacionados",
+                "SolicitudAceptacionRechazo",
+                "cancelacion",
+                "cfdi",
+                "phpcfdi",
+                "sat"
+            ],
+            "time": "2020-08-28T23:34:06+00:00"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": [],
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": [],
+    "platform-dev": [],
+    "plugin-api-version": "1.1.0"
+}
