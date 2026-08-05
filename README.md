@@ -14,8 +14,27 @@ Este módulo permite la integración de la facturación electrónica **CFDI (Com
 ## Requisitos del Sistema
 
 * **PHP:** Versión 7.2 o superior.
-* **Extensiones de PHP:** `openssl`, `bcmath`, `mysqli`, `pdo`, `pdo_mysql`, `gd`, `intl`, `xml`, `mbstring`, `zip`, `imap` y `calendar`.
+* **Extensiones de PHP:** `openssl`, `bcmath`, `mysqli`, `pdo`, `pdo_mysql`, `gd`, `intl`, `xml`, `xsl`, `soap`, `mbstring`, `zip`, `imap` y `calendar`.
 * **Dolibarr ERP/CRM:** Versión 11.0 o superior.
+
+### Dependencias adicionales
+
+Cuando el módulo se ejecuta con el entorno Docker del repositorio padre, el
+`docker/Dockerfile` instala las extensiones `bcmath`, `xsl` y `soap`. Si se
+ejecuta Dolibarr fuera de ese entorno, deben habilitarse manualmente.
+
+El cancelador SAT requiere las dependencias Composer declaradas en
+`elcInv/CancelSat/composer/composer.json`. Desde la raíz de este subrepo,
+instálalas con:
+
+```bash
+cd elcInv/CancelSat/composer
+composer install --no-dev --no-interaction --prefer-dist
+```
+
+Esto instala `phpcfdi/xml-cancelacion` y sus dependencias en `vendor/`. La
+carpeta `vendor/` no se versiona, por lo que debe instalarse en cada entorno
+que ejecute cancelaciones CFDI.
 
 ## Guía de Configuración
 
@@ -46,13 +65,3 @@ La rama correcta para consultar el trabajo histórico de extrafields es `feature
 ---
 
 Desarrollado por [Kristal Software House](https://github.com/arturoKSH/dolibarr_zakili).
-
----
-
-## Notas de prueba del submódulo
-
-Líneas heredadas de la rama `dev`, usadas para verificar que el submódulo se
-actualiza de forma independiente del repositorio padre:
-
-Prueba de que solo actualiza cfdi readme
-prueba 2
