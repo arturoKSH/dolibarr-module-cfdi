@@ -447,7 +447,7 @@ class modCfdi extends DolibarrModules
 		// Serie CFDI del documento.
 		$extrafields->addExtraField('serie', 'ExtrafieldCfdiSerie', 'sellist', 103, 10, 'facture', 0, 0, '', array('options' => array('serie:serie:rowid::' => 'N')), 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
 		// Exportacion CFDI 4.0.
-		$extrafields->addExtraField('export', 'ExtrafieldCfdiExportacion', 'select', 104, 2, 'facture', 0, 0, '', array('options' => array('01' => 'No aplica', '02' => 'Definitiva', '03' => 'Temporal')), 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
+		$extrafields->addExtraField('export', 'ExtrafieldCfdiExportacion', 'select', 104, 2, 'facture', 0, 0, '01', array('options' => array('01' => 'No aplica', '02' => 'Definitiva', '03' => 'Temporal')), 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
 		// Metodo de pago CFDI: PUE o PPD.
 		$extrafields->addExtraField('mofpaymt', 'ExtrafieldCfdiPaymentMethod', 'select', 105, 1, 'facture', 0, 0, '', array('options' => array('1' => 'PUE', '2' => 'PPD')), 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
 
