@@ -13,8 +13,8 @@ Este módulo permite la integración de la facturación electrónica **CFDI (Com
 
 ## Requisitos del Sistema
 
-* **PHP:** Versión 7.0 o superior.
-* **Extensiones de PHP:** `openssl` (obligatoria para lectura y validación de claves).
+* **PHP:** Versión 7.2 o superior.
+* **Extensiones de PHP:** `openssl`, `bcmath`, `mysqli`, `pdo`, `pdo_mysql`, `gd`, `intl`, `xml`, `mbstring`, `zip`, `imap` y `calendar`.
 * **Dolibarr ERP/CRM:** Versión 11.0 o superior.
 
 ## Guía de Configuración
@@ -33,9 +33,15 @@ Este módulo permite la integración de la facturación electrónica **CFDI (Com
    * Proporciona la **Contraseña del certificado**.
    * Haz clic en **Guardar** e introduce tu contraseña de acceso a Dolibarr para autorizar y almacenar el certificado.
 
+   Los cuatro archivos deben cargarse manualmente; el módulo no genera automáticamente los archivos PEM a partir del `.cer`, `.key` y la contraseña.
+
 3. **Verificación de Conectividad:**
    * Accede a la pestaña **Test** dentro de la configuración del módulo.
    * Verifica que la conectividad con el PAC sea exitosa (Accesible) y que el estado del certificado digital aparezca como **Vigente**.
+
+## Nota de desarrollo
+
+La rama correcta para consultar el trabajo histórico de extrafields es `feature/AddExtrafields`.
 
 ---
 
