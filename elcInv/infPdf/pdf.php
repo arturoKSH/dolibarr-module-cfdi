@@ -103,7 +103,7 @@
 	 */
 	public function __construct()
 	{
-		global $conf, $langs, $mysoc;
+		global $conf, $langs, $mysoc, $db;
 
 		// Translations
 		$langs->loadLangs(array("main", "bills"));
@@ -185,9 +185,28 @@
 		$this->atleastonediscount=0;
 		$this->situationinvoice=false;
 	}
+
+	/**
+	 * Compatibilidad con el contrato de modelos PDF de Dolibarr 22+.
+	 * El módulo conserva su generador histórico en generar().
+	 *
+	 * @param  Facture   $object           Factura a generar
+	 * @param  Translate $outputlangs      Idioma de salida
+	 * @param  string    $srctemplatepath  Plantilla fuente (no usada)
+	 * @param  int       $hidedetails      Ocultar detalle (no usado)
+	 * @param  int       $hidedesc         Ocultar descripción (no usado)
+	 * @param  int       $hideref          Ocultar referencia (no usado)
+	 * @return int
+	 */
+	public function write_file($object, $outputlangs, $srctemplatepath = '', $hidedetails = 0, $hidedesc = 0, $hideref = 0)
+	{
+		global $db;
+
+		return $this->generar($object->id, $outputlangs, $db, $object->ref);
+	}
 	public  function generar($id,$outputlangs,$db,$ref)
 	{
-		$factuas = " SELECT e.fk_paiement, a.rowid,format(e.amount,2) amount,a.multicurrency_code,cast(datep as char) fechapago,g.code_sat,a.ref,c.uuid, f.ref pago, ";
+		$factuas = " SELECT e.fk_paiement, a.rowid,format(e.amount,2) amount,a.multicurrency_code,cast(datep as char) fechapago,g.code,a.ref,c.uuid, f.ref pago, ";
 		$factuas.= " CASE c.mofpaymt WHEN 1 THEN 'PUE' WHEN 2 THEN 'PPD' END MetodoPago, format(f.amount,2) ttc, ";
 		$factuas.= " format((a.total_ttc - k.saldant +e.amount)-ifnull(l.nc,0),2) impsaldoanterior, ";
 		$factuas.= " format((((a.total_ttc - k.saldant + e.amount)) - e.amount )-ifnull(l.nc,0),2) saldoinsoluto, ";
@@ -262,7 +281,7 @@
 		$Mpaymentsat=array('02'=>'Cheque','03'=>'Transferencia bancaria','04'=>'Tarjeta de crédito','01'=>'Efectivo','99'=>'Por definir','17'=>'Compensación');
 		$mpago="";
 		foreach ($Mpaymentsat as $key => $value) {
-				if ($key==$objfactuas[0]['code_sat']) {
+				if ($key==$objfactuas[0]['code']) {
 					$mpago='('.$key.') '.$value;
 				}
 			}

@@ -28,7 +28,7 @@ $xml = new DOMdocument('1.0', 'UTF-8');
 $mainElmnt = crtElmnt ($xml,'http://www.sat.gob.mx/cfd/4',"cfdi:Comprobante",$xml);// PAT
 foreach ($grlArray as $key => $value)
 {
-    if($objGrl[0][$value]){
+    if(isset($objGrl[0][$value]) && $objGrl[0][$value] !== ''){
         createAttribt($xml, $mainElmnt, $value, $objGrl[0][$value]);//PAT    
     }
 }
