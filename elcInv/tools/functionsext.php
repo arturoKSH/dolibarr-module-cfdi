@@ -18,8 +18,12 @@ function total($db, $rowid)
     return $result;
 }
 
-function dad($db)
+function dad($db = null)
 {
+    if ($db === null) {
+        global $db;
+    }
+
     $query = "select a.account_number NumCta, a.label Descc, b.account_number, b.label ";
     $query .= "from    llx_accounting_account a left join llx_accounting_account b ";
     $query .= "on  a.fk_pcg_version = b.fk_pcg_version  ";
@@ -130,7 +134,7 @@ function salIn($db, $rowid, $init){
 }
 
 /* Jefe tiene personal capacitado */
-function treedate($db, $sup, $list = '', $init, $end)
+function treedate($db, $sup, $list = '', $init = '', $end = '')
 {
     if (!is_array($list)) {
         $list = array();
