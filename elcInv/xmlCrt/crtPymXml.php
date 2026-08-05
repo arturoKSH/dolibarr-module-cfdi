@@ -799,9 +799,9 @@ if ($action == 'confirm_Cancel_CFDI' && $confirm == 'yes') {
          */
         
         createPem($localPht, $certName, $certPsw);
-        // OJO: $xlst viene de stampCfdi.php y apunta a origStr40.xslt (facturas).
-        // Para el complemento de pagos deberia ser /xslt/origStrPym40.xslt -- ver PR.
-        $orgStr = getOrigStr($elcInvDir, $xml, $xlst);
+        // El complemento de pagos requiere su propia cadena original SAT.
+        $paymentXlst = "/xslt/origStrPym40.xslt";
+        $orgStr = getOrigStr($elcInvDir, $xml, $paymentXlst);
         //print $orgStr;//aoz
         $linea = stampStr($localPht, $certName, $orgStr);
 
