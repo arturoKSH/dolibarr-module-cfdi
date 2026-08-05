@@ -14,7 +14,7 @@ Este módulo permite la integración de la facturación electrónica **CFDI (Com
 ## Requisitos del Sistema
 
 * **PHP:** Versión 7.2 o superior.
-* **Extensiones de PHP:** `openssl`, `bcmath`, `mysqli`, `pdo`, `pdo_mysql`, `gd`, `intl`, `xml`, `mbstring`, `zip`, `imap` y `calendar`.
+* **Extensiones de PHP:** `openssl`, `bcmath`, `mysqli`, `pdo`, `pdo_mysql`, `gd`, `intl`, `xml`, `xsl`, `soap`, `mbstring`, `zip`, `imap` y `calendar`.
 * **Dolibarr ERP/CRM:** Versión 11.0 o superior.
 
 ## Guía de Configuración
