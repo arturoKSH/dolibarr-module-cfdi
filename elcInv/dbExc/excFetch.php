@@ -132,17 +132,6 @@ function excQryFailed(&$errmsg = '')
 
 function getCustInf($Id)
 {   
-        //truncate en Total
-        //$sql = " SELECT    'ESCUELA KEMPER URGATE SA DE CV' Nombre,'EKU9003173C9' Rfc, '21000' DomicilioFiscalReceptor,       
-        //ABS(round(a.total_ttc + 0.0000000001, 2)) Total, //aoz reemplazar por la linea del total
-        // $sql = " SELECT 
-        //             CASE  
-        //             WHEN a.type = 2 then b.nom
-        //             else
-        //                 ifnull(e.nom,b.nom)
-        //             end Nombre
-                    
-        //             ,ifnull(e.siren,b.siren) Rfc,ifnull(e.zip,b.zip) DomicilioFiscalReceptor,     
         $receiverFields = cfdiInvoiceReceiverFields();
         $sql = " SELECT    ".$receiverFields.",
                     ifnull(d.propouse,'') UsoCFDI ,round(total_ttc/multicurrency_total_ttc,2) as TipoCambio,
@@ -252,9 +241,6 @@ function getDtlgrpInv($id, $fk_product)
 
 function getCustInfPym($Id)
 {   
-    //        $sql = " SELECT    'ESCUELA KEMPER URGATE SA DE CV' nom,'EKU9003173C9' siren, '21000' zip,           
-    
-    //    $sql = "select c.nom,  c.siren, zip,d.propouse,   d.fiscalreg,
         $receiverFields = cfdiPaymentReceiverFields();
         $sql = "select ".$receiverFields.", ifnull(d.propouse,'') propouse , d.fiscalreg,
             Concat( curdate() ,'T',DATE_FORMAT(DATE_SUB(DATE_ADD(NOW(), INTERVAL -2 HOUR),INTERVAL 000 MINUTE), '%H:%i:%S' )) as Fecha
