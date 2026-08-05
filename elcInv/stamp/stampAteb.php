@@ -151,7 +151,7 @@ function addBtn($object)
                 || ! empty($conf->global->FACTURE_SENDBYEMAIL_FOR_ALL_STATUS)
            ) 
         {
-            print '<div class="inline-block divButAction"><a class="butAction'.($conf->use_javascript_ajax?' reposition':'').'" href="' . $_SERVER["PHP_SELF"] . '?facid=' . $object->id . '&amp;action=confirm_valid2&amp;token=' . newToken() . '">' . $langs->trans('Generar CFDI ') . '</a></div>';    
+            print '<div class="inline-block divButAction"><a class="butAction'.($conf->use_javascript_ajax?' reposition':'').'" href="' . $_SERVER["PHP_SELF"] . '?facid=' . $object->id . '&amp;action=confirm_valid2&amp;token=' . newToken() . '">' . $langs->trans('Generar CFDI ') . '</a></div>';
             print '<div class="inline-block divButAction"><a class="butAction'.($conf->use_javascript_ajax?' reposition':'').'" href="' . $_SERVER["PHP_SELF"] . '?facid=' . $object->id . '&amp;action=Timbrar&amp;token=' . newToken() . '">' . $langs->trans('Timbrar') . '</a></div>';
                 
         }
