@@ -140,6 +140,11 @@ CfdiErrorLogMessageCol = Message d'erreur
 ExtrafieldCfdiUuid = UUID CFDI
 ExtrafieldCfdiWarehouse = Entrepôt CFDI
 ExtrafieldCfdiPropouse = Usage CFDI (SAT)
+ExtrafieldCfdiFiscalRegimen = Régime fiscal CFDI
+ExtrafieldCfdiInvoiceTo = Destinataire CFDI alternatif
+ExtrafieldCfdiSerie = Série CFDI
+ExtrafieldCfdiExportacion = Exportation CFDI
+ExtrafieldCfdiPaymentMethod = Méthode de paiement CFDI
 
 #
 # Page À propos

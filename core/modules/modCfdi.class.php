@@ -440,6 +440,16 @@ class modCfdi extends DolibarrModules
 		// Uso de CFDI (catalogo SAT, ya se instala en llx_usocfdi via sql/llx_usocfdi.sql)
 		$extrafields->addExtraField('propouse', 'ExtrafieldCfdiPropouse', 'sellist', 102, 20, 'facture', 0, 0, '', array('options' => array('usocfdi:Descripcion:usocfdi_id::' => 'N')), 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
 		$extrafields->addExtraField('propouse', 'ExtrafieldCfdiPropouse', 'sellist', 1, 20, 'thirdparty', 0, 0, '', array('options' => array('usocfdi:Descripcion:usocfdi_id::' => 'N')), 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
+		// Regimen fiscal del receptor, con catalogo SAT del modulo.
+		$extrafields->addExtraField('fiscalreg', 'ExtrafieldCfdiFiscalRegimen', 'sellist', 2, 10, 'thirdparty', 0, 0, '', array('options' => array('FiscalRegimen:fiscalreg:description::' => 'N')), 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
+		// Receptor alterno de la factura (por ejemplo, una sucursal o razon social).
+		$extrafields->addExtraField('invto', 'ExtrafieldCfdiInvoiceTo', 'sellist', 3, 10, 'thirdparty', 0, 0, '', array('options' => array('societe:nom:rowid::' => 'N')), 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
+		// Serie CFDI del documento.
+		$extrafields->addExtraField('serie', 'ExtrafieldCfdiSerie', 'sellist', 103, 10, 'facture', 0, 0, '', array('options' => array('serie:serie:rowid::' => 'N')), 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
+		// Exportacion CFDI 4.0.
+		$extrafields->addExtraField('export', 'ExtrafieldCfdiExportacion', 'select', 104, 2, 'facture', 0, 0, '', array('options' => array('01' => 'No aplica', '02' => 'Definitiva', '03' => 'Temporal')), 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
+		// Metodo de pago CFDI: PUE o PPD.
+		$extrafields->addExtraField('mofpaymt', 'ExtrafieldCfdiPaymentMethod', 'select', 105, 1, 'facture', 0, 0, '', array('options' => array('1' => 'PUE', '2' => 'PPD')), 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
 
 		// Permissions
 		$this->remove($options);
