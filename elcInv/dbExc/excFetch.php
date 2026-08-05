@@ -15,6 +15,48 @@ $active = true;
  */
 $GLOBALS['excQryLastError'] = '';
 
+// Receptor SAT de pruebas. En produccion siempre se usan los datos del cliente.
+if (!defined('CFDI_TEST_RECEPTOR_NOMBRE')) define('CFDI_TEST_RECEPTOR_NOMBRE', 'ESCUELA KEMPER URGATE SA DE CV');
+if (!defined('CFDI_TEST_RECEPTOR_RFC')) define('CFDI_TEST_RECEPTOR_RFC', 'EKU9003173C9');
+if (!defined('CFDI_TEST_RECEPTOR_CP')) define('CFDI_TEST_RECEPTOR_CP', '21000');
+
+function cfdiSqlQuotedValue($value)
+{
+    global $db;
+
+    return "'".$db->escape($value)."'";
+}
+
+function cfdiInvoiceReceiverFields()
+{
+    global $conf;
+
+    if (!empty($conf->global->CFDI_ENV) && $conf->global->CFDI_ENV === 'prod') {
+        return "CASE WHEN a.type = 2 THEN b.nom ELSE ifnull(e.nom,b.nom) END Nombre,
+                ifnull(e.siren,b.siren) Rfc,
+                ifnull(e.zip,b.zip) DomicilioFiscalReceptor";
+    }
+
+    return cfdiSqlQuotedValue(CFDI_TEST_RECEPTOR_NOMBRE)." Nombre, ".
+        cfdiSqlQuotedValue(CFDI_TEST_RECEPTOR_RFC)." Rfc, ".
+        cfdiSqlQuotedValue(CFDI_TEST_RECEPTOR_CP)." DomicilioFiscalReceptor";
+}
+
+function cfdiPaymentReceiverFields()
+{
+    global $conf;
+
+    if (!empty($conf->global->CFDI_ENV) && $conf->global->CFDI_ENV === 'prod') {
+        return "ifnull(f.nom,c.nom) nom,
+                ifnull(f.siren,c.siren) siren,
+                ifnull(f.zip,c.zip) zip";
+    }
+
+    return cfdiSqlQuotedValue(CFDI_TEST_RECEPTOR_NOMBRE)." nom, ".
+        cfdiSqlQuotedValue(CFDI_TEST_RECEPTOR_RFC)." siren, ".
+        cfdiSqlQuotedValue(CFDI_TEST_RECEPTOR_CP)." zip";
+}
+
 /**
  * Ejecuta una consulta y devuelve todas las filas como array asociativo.
  *
@@ -101,7 +143,8 @@ function getCustInf($Id)
         //             end Nombre
                     
         //             ,ifnull(e.siren,b.siren) Rfc,ifnull(e.zip,b.zip) DomicilioFiscalReceptor,     
-        $sql = " SELECT    'ESCUELA KEMPER URGATE SA DE CV' Nombre,'EKU9003173C9' Rfc, '21000' DomicilioFiscalReceptor,  
+        $receiverFields = cfdiInvoiceReceiverFields();
+        $sql = " SELECT    ".$receiverFields.",
                     ifnull(d.propouse,'') UsoCFDI ,round(total_ttc/multicurrency_total_ttc,2) as TipoCambio,
                     ABS(round(a.multicurrency_total_ht + 0.0000000001, 2)) SubTotal,
                     (case when f.fiscalreg = '' or  f.fiscalreg is null then c.fiscalreg else f.fiscalreg end) RegimenFiscalReceptor, d.export Exportacion, 
@@ -212,7 +255,8 @@ function getCustInfPym($Id)
     //        $sql = " SELECT    'ESCUELA KEMPER URGATE SA DE CV' nom,'EKU9003173C9' siren, '21000' zip,           
     
     //    $sql = "select c.nom,  c.siren, zip,d.propouse,   d.fiscalreg,
-        $sql = "select ifnull(f.nom,c.nom) nom,ifnull(f.siren,c.siren) siren,ifnull(f.zip,c.zip) zip, ifnull(d.propouse,'') propouse , d.fiscalreg,
+        $receiverFields = cfdiPaymentReceiverFields();
+        $sql = "select ".$receiverFields.", ifnull(d.propouse,'') propouse , d.fiscalreg,
             Concat( curdate() ,'T',DATE_FORMAT(DATE_SUB(DATE_ADD(NOW(), INTERVAL -2 HOUR),INTERVAL 000 MINUTE), '%H:%i:%S' )) as Fecha
             from 	".MAIN_DB_PREFIX."facture b 
             inner join ".MAIN_DB_PREFIX."societe c on b.fk_soc = c.rowid 
