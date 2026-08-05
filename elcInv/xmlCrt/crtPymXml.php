@@ -16,7 +16,11 @@ use PhpCfdi\XmlCancelacion\Credentials;
 require '../CancelSat/composer/vendor/autoload.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.formfile.class.php';
 //require_once DOL_DOCUMENT_ROOT . '/core/class/html.formmargin.class.php';
-require_once DOL_DOCUMENT_ROOT."/custom/createevents/events.class.php";
+// El XML de pagos no depende del módulo opcional createevents.
+$eventsClass = DOL_DOCUMENT_ROOT."/custom/createevents/events.class.php";
+if (file_exists($eventsClass)) {
+	require_once $eventsClass;
+}
 
 include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/xmlCrt/stampCfdi.php'); //ehm
 
@@ -320,12 +324,18 @@ if ($action == 'confirm_Cancel_CFDI' && $confirm == 'yes') {
             }
             $objdtl = getDtlPym($id);
 
-            $NameCompany = $conf->global->MAIN_INFO_SOCIETE_NOM;
-            $Rfcc = $conf->global->MAIN_INFO_SIREN;
-            $CodigoPostal = $conf->global->MAIN_INFO_SOCIETE_ZIP;
-            $RegimenFiscal = $conf->global->MAIN_INFO_SOCIETE_OBJECT;
-            $certificate = $conf->global->MAIN_INFO_CFDI_CERT;
-            $certificatevalue = $conf->global->MAIN_INFO_CFDI_CERT_VAL;
+            $NameCompany = getDolGlobalString('MAIN_INFO_SOCIETE_NOM');
+            if ($NameCompany === '') {
+                $NameCompany = getDolGlobalString('MAIN_INFO_ACCOUNTANT_NAME');
+            }
+            $Rfcc = getDolGlobalString('MAIN_INFO_SIREN');
+            $CodigoPostal = getDolGlobalString('MAIN_INFO_SOCIETE_ZIP');
+            if ($CodigoPostal === '') {
+                $CodigoPostal = getDolGlobalString('MAIN_INFO_ACCOUNTANT_ZIP');
+            }
+            $RegimenFiscal = getDolGlobalString('MAIN_INFO_SOCIETE_OBJECT');
+            $certificate = getDolGlobalString('MAIN_INFO_CFDI_CERT');
+            $certificatevalue = getDolGlobalString('MAIN_INFO_CFDI_CERT_VAL');
 
 
             $search  = array('-', ',');
@@ -738,23 +748,23 @@ if ($action == 'confirm_Cancel_CFDI' && $confirm == 'yes') {
          * Inicio
          * Elementos modificados si un decimal afecta al xml 
          */
-        if($totaless['0.160000']){
+        if(isset($totaless['0.160000']) && $totaless['0.160000']){
             $TotalTrasladosImpuestoIVA16 = $xml->createAttribute('TotalTrasladosImpuestoIVA16');
             $TotalTrasladosImpuestoIVA16->value = $totaless['0.160000'];
             $totales->appendChild($TotalTrasladosImpuestoIVA16);
         }
-        if($totalesb['0.160000']){
+        if(isset($totalesb['0.160000']) && $totalesb['0.160000']){
             $TotalTrasladosBaseIVA16 = $xml->createAttribute('TotalTrasladosBaseIVA16');
             $TotalTrasladosBaseIVA16->value = $totalesb['0.160000'];
             $totales->appendChild($TotalTrasladosBaseIVA16);
         }
 
-        if($totaless['0.000000']){
+        if(isset($totaless['0.000000']) && $totaless['0.000000']){
             $TotalTrasladosImpuestoIVA0 = $xml->createAttribute('TotalTrasladosImpuestoIVA0');
             $TotalTrasladosImpuestoIVA0->value = $totaless['0.000000'];
             $totales->appendChild($TotalTrasladosImpuestoIVA0);
         }
-        if($totalesb['0.000000']){
+        if(isset($totalesb['0.000000']) && $totalesb['0.000000']){
             $TotalTrasladosBaseIVA0 = $xml->createAttribute('TotalTrasladosBaseIVA0');
             $TotalTrasladosBaseIVA0->value = $totalesb['0.000000'];
             $totales->appendChild($TotalTrasladosBaseIVA0);
@@ -820,8 +830,12 @@ if ($action == 'confirm_Cancel_CFDI' && $confirm == 'yes') {
         $ruta=$carpeta.'/'.$objdtl[0]['pago'].".xml";
         $xml->save($ruta);
 
-            unlink($nomarchiv);
-            unlink('./sello.txt');
+            if (!empty($nomarchiv) && file_exists($nomarchiv)) {
+				unlink($nomarchiv);
+			}
+			if (file_exists('./sello.txt')) {
+				unlink('./sello.txt');
+			}
 
             // $db->begin();
              include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/infPdf/pdf.php');
@@ -829,8 +843,10 @@ if ($action == 'confirm_Cancel_CFDI' && $confirm == 'yes') {
             //  $pdfP= new pdf();
             //  $pdfP->__construct($db);
             //  $pdfP->generar($id,$outputlangs,$db,$ref);
-            $actioncomm = new events($db);
-            $actioncomm->createActionPaiement($user, $object);
+			if (class_exists('events')) {
+				$actioncomm = new events($db);
+				$actioncomm->createActionPaiement($user, $object);
+			}
 }
 
 
@@ -872,6 +888,7 @@ include DOL_DOCUMENT_ROOT . '/custom/sendemail/card_presend.tpl.php';
 function addBtn($objsql, $id)
 {
     global $db, $langs, $conf;
+	$title_button = '';
      
     $cancelcfdi = "SELECT a.UUID ";
     $cancelcfdi.= " FROM ".MAIN_DB_PREFIX."kshCancelcfdi a ";

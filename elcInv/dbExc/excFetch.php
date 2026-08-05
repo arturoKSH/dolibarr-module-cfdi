@@ -146,7 +146,7 @@ function getCustInf($Id)
                     WHEN a.type = 2 then 'PUE'
                     WHEN d.mofpaymt = 1 THEN 'PUE' 
                     WHEN d.mofpaymt = 2 THEN 'PPD'	
-                    END MetodoPago, (select 	f.code_sat
+                    END MetodoPago, (select 	f.code
                                         from 	".MAIN_DB_PREFIX."c_paiement f
                                         where f.id = a.fk_mode_reglement
                                     ) FormaPago, 
@@ -182,7 +182,7 @@ function getDtlInv($id)
     $sql = " select  a.fk_facture, 
                 a.rowid,a.vat_src_code, 
             ifnull(d.prodservid,'01010101') ClaveProdServ, 
-            ifnull(e.UOMId,'ACT') ClaveUnidad, 
+            ifnull(e.code,'ACT') ClaveUnidad, 
             ifnull(a.fk_product,'Servicio') NoIdentificacion,
             round(a.qty,6) Cantidad,
             ifnull(e.code,'Serv') Unidad,
@@ -211,7 +211,7 @@ function getDtlgrpInv($id, $fk_product)
                 MIN(a.rowid) AS rowid,
                 MIN(a.vat_src_code) AS vat_src_code,
                 IFNULL(d.prodservid, '01010101') AS ClaveProdServ, 
-                IFNULL(e.UOMId, 'ACT') AS ClaveUnidad, 
+                IFNULL(e.code, 'ACT') AS ClaveUnidad, 
                 IFNULL(a.fk_product, 'Servicio') AS NoIdentificacion,
                 ROUND(SUM(a.qty), 6) AS Cantidad,
                 IFNULL(e.code, 'Serv') AS Unidad,
@@ -256,7 +256,7 @@ function getCustInfPym($Id)
 }
 function getDtlPym($id)
 {
-    $sql = "	select 	a.rowid NumOper, format(a.amount,2) monto, 'MXN' MonedaP, c.code_sat formpagop,a.ref pago,
+    $sql = "	select 	a.rowid NumOper, format(a.amount,2) monto, 'MXN' MonedaP, c.code formpagop,a.ref pago,
     	 	cast((concat(SUBSTRING(a.datep,1,10),  'T'  , SUBSTRING(a.datep,12,9))) as char) fechapago, d.ref  folio, 
     		f.serie,format(((d.total_ttc - k.saldant +b.amount)-ifnull(l.nc,0)),2) impsaldoanterior, 
     		format((((d.total_ttc - k.saldant + b.amount)-ifnull(l.nc,0)) - b.amount ),2) saldoinsoluto, 
@@ -607,7 +607,7 @@ function gethdPdfInv($id)
 		e.peranio,
         (case when k.fiscalreg = '' or  k.fiscalreg is null then c.fiscalreg else k.fiscalreg end) fiscalreg,
         (case when l.description = '' or  l.description is null then g.description else l.description end) description,        
-                b.rowid, b.fk_mode_reglement, e.mofpaymt, h.serie, b.ref, b.type, i.code_sat,
+                b.rowid, b.fk_mode_reglement, e.mofpaymt, h.serie, b.ref, b.type, i.code,
                 e.export
             FROM ".MAIN_DB_PREFIX."facturedet a 
             inner join ".MAIN_DB_PREFIX."facture b on a.fk_facture=b.rowid 
@@ -630,7 +630,7 @@ function getDtlPdfInv($id, $line)
     $sql = " select  a.fk_facture, 
                 a.rowid,
 		ifnull(d.prodservid,'01010101') ClaveProdServ, 
-		ifnull(e.UOMId,'ACT') ClaveUnidad, 
+		ifnull(e.code,'ACT') ClaveUnidad, 
 		ifnull(a.fk_product,'Servicio') NoIdentificacion,
 		round(a.qty,6) Cantidad,
 		ifnull(e.code,'Serv') Unidad,
