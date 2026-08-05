@@ -888,10 +888,10 @@ function addBtn($objsql, $id)
     print '<a class="butAction'.($conf->use_javascript_ajax?' reposition':'').'" href="'.$_SERVER['PHP_SELF'].'?id='.$id.'&amp;action=abandono" title="'.$title_button.'">'.$langs->trans('Clasificar cancelado').'</a>';
 
     if (empty($objsql[0]['uuid'])) {
-        print '<a class="butAction'.($conf->use_javascript_ajax?' reposition':'').'" href="'.$_SERVER['PHP_SELF'].'?id='.$id.'&amp;action=xml" title="'.$title_button.'">'.$langs->trans('Generar CFDI').'</a>';
+        print '<a class="butAction'.($conf->use_javascript_ajax?' reposition':'').'" href="'.$_SERVER['PHP_SELF'].'?id='.$id.'&amp;action=xml&amp;token='.newToken().'" title="'.$title_button.'">'.$langs->trans('Generar CFDI').'</a>';
     }
     if (empty($objsql[0]['uuid'])) {
-    print '<a class="butAction'.($conf->use_javascript_ajax?' reposition':'').'" href="'.$_SERVER['PHP_SELF'].'?id='.$id.'&amp;action=Timbrar" title="'.$title_button.'">'.$langs->trans('Timbrar').'</a>';
+    print '<a class="butAction'.($conf->use_javascript_ajax?' reposition':'').'" href="'.$_SERVER['PHP_SELF'].'?id='.$id.'&amp;action=Timbrar&amp;token='.newToken().'" title="'.$title_button.'">'.$langs->trans('Timbrar').'</a>';
     } else if (!empty($objsql[0]['uuid']) and empty($objCancelcfdi[0]['UUID'])) {
         print '<a class="butAction' . ($conf->use_javascript_ajax ? ' reposition' : '') . '" href="' . $_SERVER['PHP_SELF'] . '?id=' . $id . '&amp;action=Cancelcfdi" title="' . $title_button . '">' . $langs->trans('Cancelar CFDI') . '</a>';
     }
