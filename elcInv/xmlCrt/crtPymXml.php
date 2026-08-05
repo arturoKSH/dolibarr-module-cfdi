@@ -799,8 +799,9 @@ if ($action == 'confirm_Cancel_CFDI' && $confirm == 'yes') {
          */
         
         createPem($localPht, $certName, $certPsw);
-        // El complemento de pagos requiere su propia cadena original SAT.
-        $paymentXlst = "/xslt/origStrPym40.xslt";
+        // origStr40.xslt incluye tools.xslt y la plantilla especifica de pagos.
+        // origStrPym40.xslt no debe cargarse directamente: no tiene plantilla raiz.
+        $paymentXlst = "/xslt/origStr40.xslt";
         $orgStr = getOrigStr($elcInvDir, $xml, $paymentXlst);
         //print $orgStr;//aoz
         $linea = stampStr($localPht, $certName, $orgStr);
