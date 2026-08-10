@@ -52,24 +52,21 @@ class numtostr
 
     public static function convertir($number, $currency = '', $format = false, $decimals = '')
     {
-        $base_number = $number;
         $converted = '';
-        $decimales = '';
 
-        if (($base_number < 0) || ($base_number > 999999999)) {
+        if (($number < 0) || ($number > 999999999)) {
             return 'No es posible convertir el numero en letras';
         }
 
-        $div_decimales = explode('.',$base_number);
-        if(count($div_decimales) > 1){
-            $base_number = $div_decimales[0];
-            $decNumberStr = (string) $div_decimales[1];
-            if(strlen($decNumberStr) == 2){
-                $decNumberStrFill = str_pad($decNumberStr, 9, '0', STR_PAD_LEFT);
-                $decCientos = substr($decNumberStrFill, 6);
-                $decimales = self::convertGroup($decCientos);
-            }
-        }
+        // Round to 2 decimals first: floating point sums (e.g. 337667.996) must
+        // carry into the whole part instead of being truncated as-is, and the
+        // cents string must always be exactly 2 digits.
+        $numberFormatted = number_format((float) $number, 2, '.', '');
+        list($base_number, $decNumberStr) = explode('.', $numberFormatted);
+
+        $decNumberStrFill = str_pad($decNumberStr, 9, '0', STR_PAD_LEFT);
+        $decCientos = substr($decNumberStrFill, 6);
+        $decimales = self::convertGroup($decCientos);
 
         $numberStr = (string) $base_number;
         $numberStrFill = str_pad($numberStr, 9, '0', STR_PAD_LEFT);
