@@ -17,6 +17,11 @@ $grlArray=array('Total','Moneda','SubTotal','MetodoPago','Descuento',
                 'Fecha','Folio','Serie','LugarExpedicion','Version','Exportacion');
 
 $objGrl =  getCustInf($id);
+$excQryError = '';
+if (excQryFailed($excQryError) || empty($objGrl)) {
+    setEventMessages('No se pudieron obtener los datos fiscales principales de la factura. El timbrado fue cancelado.', null, 'errors');
+    return;
+}
 
 $xml = new DOMdocument('1.0', 'UTF-8');
 

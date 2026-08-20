@@ -313,6 +313,11 @@ if ($action == 'confirm_Cancel_CFDI' && $confirm == 'yes') {
             include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/dbExc/excFetch.php'); //ehm
             
             $objsociete = getCustInfPym($id);            
+            $excQryError = '';
+            if (excQryFailed($excQryError) || empty($objsociete)) {
+                setEventMessages('No se pudieron obtener los datos fiscales principales del pago. El timbrado fue cancelado.', null, 'errors');
+                return;
+            }
             $objdtl = getDtlPym($id);
 
             $NameCompany = $conf->global->MAIN_INFO_SOCIETE_NOM;
