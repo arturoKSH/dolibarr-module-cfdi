@@ -486,6 +486,25 @@ class modCfdi extends DolibarrModules
 			}
 		}
 
+		// Claves SAT de forma de pago y unidad: los códigos de Dolibarr (VIR, KG...) no son claves SAT.
+		$satColumns = array(
+			'c_paiement' => array('code_sat', 'varchar(2) NULL'),
+			'c_units' => array('UOMId', 'varchar(5) NULL'),
+		);
+		foreach ($satColumns as $table => $column) {
+			$satColumn = $this->db->query("SHOW COLUMNS FROM ".MAIN_DB_PREFIX.$table." LIKE '".$column[0]."'");
+			if ($satColumn && $this->db->num_rows($satColumn) === 0) {
+				if (!$this->db->query("ALTER TABLE ".MAIN_DB_PREFIX.$table." ADD ".$column[0]." ".$column[1])) {
+					$this->error = $this->db->lasterror();
+					return -1;
+				}
+			}
+		}
+		$paymentSatCodes = array('LIQ' => '01', 'CHQ' => '02', 'VIR' => '03', 'CB' => '04');
+		foreach ($paymentSatCodes as $code => $codeSat) {
+			$this->db->query("UPDATE ".MAIN_DB_PREFIX."c_paiement SET code_sat = '".$codeSat."' WHERE code = '".$code."' AND (code_sat IS NULL OR code_sat = '')");
+		}
+
 		// Permissions
 		$this->remove($options);
 

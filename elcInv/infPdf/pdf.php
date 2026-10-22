@@ -206,7 +206,7 @@
 	}
 	public  function generar($id,$outputlangs,$db,$ref)
 	{
-		$factuas = " SELECT e.fk_paiement, a.rowid,format(e.amount,2) amount,a.multicurrency_code,cast(datep as char) fechapago,g.code,a.ref,c.uuid, f.ref pago, ";
+		$factuas = " SELECT e.fk_paiement, a.rowid,format(e.amount,2) amount,a.multicurrency_code,cast(datep as char) fechapago,g.code_sat,a.ref,c.uuid, f.ref pago, ";
 		$factuas.= " CASE c.mofpaymt WHEN 1 THEN 'PUE' WHEN 2 THEN 'PPD' END MetodoPago, format(f.amount,2) ttc, ";
 		$factuas.= " format((a.total_ttc - k.saldant +e.amount)-ifnull(l.nc,0),2) impsaldoanterior, ";
 		$factuas.= " format((((a.total_ttc - k.saldant + e.amount)) - e.amount )-ifnull(l.nc,0),2) saldoinsoluto, ";
@@ -281,7 +281,7 @@
 		$Mpaymentsat=array('02'=>'Cheque','03'=>'Transferencia bancaria','04'=>'Tarjeta de crédito','01'=>'Efectivo','99'=>'Por definir','17'=>'Compensación');
 		$mpago="";
 		foreach ($Mpaymentsat as $key => $value) {
-				if ($key==$objfactuas[0]['code']) {
+				if ($key==$objfactuas[0]['code_sat']) {
 					$mpago='('.$key.') '.$value;
 				}
 			}
