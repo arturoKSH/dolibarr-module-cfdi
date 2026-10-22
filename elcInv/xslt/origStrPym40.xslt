@@ -1,4 +1,4 @@
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:fn="http://www.w3.org/2005/xpath-functions" xmlns:pago20="http://www.sat.gob.mx/Pagos20" version="2.0">
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:fn="http://www.w3.org/2005/xpath-functions" xmlns:pago20="http://www.sat.gob.mx/Pagos20" version="1.0">
 <xsl:template match="pago20:Pagos">
 <!-- Manejador de Atributos Pagos -->
 <xsl:call-template name="Requerido">

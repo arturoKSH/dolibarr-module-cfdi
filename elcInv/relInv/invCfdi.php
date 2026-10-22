@@ -9,7 +9,7 @@
 //$h = sizeof($head);
 
 
-$head[$h][0] = DOL_URL_ROOT.'/compta/facture/elcInv/facsrel.php?facid='.$object->id;
+$head[$h][0] = DOL_URL_ROOT.'/custom/cfdi/elcInv/compta/facsrel.php?facid='.$object->id;
 $head[$h][1] = $langs->trans('Facturas relacionadas');
 $head[$h][2] = 'facsrel';
 $h++;
