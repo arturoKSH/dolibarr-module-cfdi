@@ -3,9 +3,19 @@
 //$xlst = "/xslt/origStr40.xslt";
 include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/xmlCrt/stampCfdi.php'); //ehm
 include(DOL_DOCUMENT_ROOT.'/custom/cfdi/elcInv/dbExc/excFetch.php'); //ehm
+require_once DOL_DOCUMENT_ROOT.'/core/lib/files.lib.php';
+
+$xmlPath = DOL_DATA_ROOT."/facture/".$object->ref."/".$object->ref.".xml";
+$abortInvXml = function ($msg) use ($xmlPath) {
+    // Sin borrarlo, Timbrar mandaría el XML de una generación anterior.
+    if (file_exists($xmlPath)) {
+        dol_delete_file($xmlPath);
+    }
+    setEventMessages($msg.' No se generó el XML CFDI.', null, 'errors');
+};
 
 if (empty($certName)) {
-    setEventMessages('Certificado SAT no configurado. Suba el .cer y .key en CFDI > Configuración.', null, 'errors');
+    $abortInvXml('Certificado SAT no configurado. Suba el .cer y .key en CFDI > Configuración.');
     return;
 }
 
@@ -19,7 +29,22 @@ $grlArray=array('Total','Moneda','SubTotal','MetodoPago','Descuento',
 $objGrl =  getCustInf($id);
 $excQryError = '';
 if (excQryFailed($excQryError) || empty($objGrl)) {
-    setEventMessages('No se pudieron obtener los datos fiscales principales de la factura. El timbrado fue cancelado.', null, 'errors');
+    $abortInvXml('No se pudieron obtener los datos fiscales principales de la factura.');
+    return;
+}
+
+$missingReceptor = array();
+foreach (array('Rfc', 'Nombre', 'DomicilioFiscalReceptor', 'RegimenFiscalReceptor', 'UsoCFDI') as $field) {
+    // En NC a público en general el Nombre se fija más abajo como 'PUBLICO EN GENERAL'.
+    if ($field == 'Nombre' && $objGrl[0]['Rfc'] == 'XAXX010101000' && $objGrl[0]['TipoDeComprobante'] == 'E') {
+        continue;
+    }
+    if (empty($objGrl[0][$field])) {
+        $missingReceptor[] = $field;
+    }
+}
+if (!empty($missingReceptor)) {
+    $abortInvXml('Faltan datos fiscales del receptor: '.implode(', ', $missingReceptor).'.');
     return;
 }
 
@@ -213,6 +238,10 @@ $retTaxBoo = false;
 $trasTaxBoo = false;
 
 $objdtl = getDtlInv($id);
+if (excQryFailed($excQryError) || empty($objdtl)) {
+    $abortInvXml('No se pudieron obtener los conceptos de la factura.');
+    return;
+}
 $concepts = crtElmnt($xml,'http://www.sat.gob.mx/cfd/4',"cfdi:Conceptos", $mainElmnt);//PAT
 
 $array=array('ClaveProdServ','ClaveUnidad','NoIdentificacion','Cantidad','Unidad','Descripcion','ValorUnitario','Importe','Descuento','ObjetoImp');
