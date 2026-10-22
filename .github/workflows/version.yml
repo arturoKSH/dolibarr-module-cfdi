@@ -36,10 +36,14 @@ jobs:
               *.*.*) ;;
               *) normalized_old="$normalized_old.0" ;;
             esac
-            latest=$(printf '%s\\n%s\\n' "$normalized_old" "$new_version" | sort -V | tail -n 1)
-            if [ "$latest" != "$new_version" ] || { [ "$old_version" = "$normalized_old" ] && [ "$new_version" = "$normalized_old" ]; }; then
-              echo "::error::Increase the module version from $old_version"
-              exit 1
+            if [ "$old_version" != "$normalized_old" ] && [ "$new_version" = "$normalized_old" ]; then
+              echo "Migrating legacy version $old_version to semantic version $new_version"
+            else
+              latest=$(printf '%s\\n%s\\n' "$normalized_old" "$new_version" | sort -V | tail -n 1)
+              if [ "$latest" != "$new_version" ] || [ "$new_version" = "$normalized_old" ]; then
+                echo "::error::Increase the module version from $old_version"
+                exit 1
+              fi
             fi
           fi
 
