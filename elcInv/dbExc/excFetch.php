@@ -15,6 +15,53 @@ $active = true;
  */
 $GLOBALS['excQryLastError'] = '';
 
+// Receptor SAT de pruebas. En produccion siempre se usan los datos del cliente.
+if (!defined('CFDI_TEST_RECEPTOR_NOMBRE')) define('CFDI_TEST_RECEPTOR_NOMBRE', 'ESCUELA KEMPER URGATE SA DE CV');
+if (!defined('CFDI_TEST_RECEPTOR_RFC')) define('CFDI_TEST_RECEPTOR_RFC', 'EKU9003173C9');
+if (!defined('CFDI_TEST_RECEPTOR_CP')) define('CFDI_TEST_RECEPTOR_CP', '21000');
+if (!defined('CFDI_TEST_RECEPTOR_REGIMEN')) define('CFDI_TEST_RECEPTOR_REGIMEN', '601');
+
+function cfdiSqlQuotedValue($value)
+{
+    global $db;
+
+    return "'".$db->escape($value)."'";
+}
+
+function cfdiIsProdEnv()
+{
+    global $conf;
+
+    return (!empty($conf->global->CFDI_ENV) && $conf->global->CFDI_ENV === 'prod');
+}
+
+// Los cuatro datos salen de la misma entidad (invto o cliente); si se mezclan, el SAT rechaza.
+function cfdiReceiverFields($cust, $custExtra, $alt, $altExtra, $names)
+{
+    if (cfdiIsProdEnv()) {
+        $useAlt = "case when ".$alt.".rowid is null then ";
+        return $useAlt.$cust.".nom else ".$alt.".nom end ".$names['nombre'].",
+                ".$useAlt.$cust.".siren else ".$alt.".siren end ".$names['rfc'].",
+                ".$useAlt.$cust.".zip else ".$alt.".zip end ".$names['cp'].",
+                ".$useAlt.$custExtra.".fiscalreg else ".$altExtra.".fiscalreg end ".$names['regimen'];
+    }
+
+    return cfdiSqlQuotedValue(CFDI_TEST_RECEPTOR_NOMBRE)." ".$names['nombre'].", ".
+        cfdiSqlQuotedValue(CFDI_TEST_RECEPTOR_RFC)." ".$names['rfc'].", ".
+        cfdiSqlQuotedValue(CFDI_TEST_RECEPTOR_CP)." ".$names['cp'].", ".
+        cfdiSqlQuotedValue(CFDI_TEST_RECEPTOR_REGIMEN)." ".$names['regimen'];
+}
+
+function cfdiInvoiceReceiverFields()
+{
+    return cfdiReceiverFields('b', 'c', 'e', 'f', array('nombre' => 'Nombre', 'rfc' => 'Rfc', 'cp' => 'DomicilioFiscalReceptor', 'regimen' => 'RegimenFiscalReceptor'));
+}
+
+function cfdiPaymentReceiverFields()
+{
+    return cfdiReceiverFields('c', 'd', 'f', 'g', array('nombre' => 'nom', 'rfc' => 'siren', 'cp' => 'zip', 'regimen' => 'fiscalreg'));
+}
+
 /**
  * Ejecuta una consulta y devuelve todas las filas como array asociativo.
  *
@@ -101,10 +148,11 @@ function getCustInf($Id)
         //             end Nombre
                     
         //             ,ifnull(e.siren,b.siren) Rfc,ifnull(e.zip,b.zip) DomicilioFiscalReceptor,     
-        $sql = " SELECT    'ESCUELA KEMPER URGATE SA DE CV' Nombre,'EKU9003173C9' Rfc, '21000' DomicilioFiscalReceptor,  
+        $receiverFields = cfdiInvoiceReceiverFields();
+        $sql = " SELECT    ".$receiverFields.",
                     ifnull(d.propouse,'') UsoCFDI ,round(total_ttc/multicurrency_total_ttc,2) as TipoCambio,
                     ABS(round(a.multicurrency_total_ht + 0.0000000001, 2)) SubTotal,
-                    (case when f.fiscalreg = '' or  f.fiscalreg is null then c.fiscalreg else f.fiscalreg end) RegimenFiscalReceptor, d.export Exportacion, 
+                    d.export Exportacion,
                     a.multicurrency_code Moneda, 
                     round(abs(round(abs(a.multicurrency_total_ht), 2) + round(abs(a.multicurrency_total_tva), 2) + round(abs(a.localtax1), 2) - round(abs(a.localtax2), 2)),2) Total,
                     (select 	 abs(round(sum(e.multicurrency_subprice * e.qty - e.multicurrency_total_ht)+ 0.0000000001,2))
@@ -212,11 +260,12 @@ function getCustInfPym($Id)
     //        $sql = " SELECT    'ESCUELA KEMPER URGATE SA DE CV' nom,'EKU9003173C9' siren, '21000' zip,           
     
     //    $sql = "select c.nom,  c.siren, zip,d.propouse,   d.fiscalreg,
-        $sql = "select ifnull(f.nom,c.nom) nom,ifnull(f.siren,c.siren) siren,ifnull(f.zip,c.zip) zip, ifnull(d.propouse,'') propouse , d.fiscalreg,
+        $receiverFields = cfdiPaymentReceiverFields();
+        $sql = "select ".$receiverFields.", ifnull(d.propouse,'') propouse ,
             Concat( curdate() ,'T',DATE_FORMAT(DATE_SUB(DATE_ADD(NOW(), INTERVAL -2 HOUR),INTERVAL 000 MINUTE), '%H:%i:%S' )) as Fecha
-            from 	".MAIN_DB_PREFIX."facture b 
-            inner join ".MAIN_DB_PREFIX."societe c on b.fk_soc = c.rowid 
-            inner join ".MAIN_DB_PREFIX."societe_extrafields d on c.rowid = d.fk_object 
+            from 	".MAIN_DB_PREFIX."facture b
+            inner join ".MAIN_DB_PREFIX."societe c on b.fk_soc = c.rowid
+            left join ".MAIN_DB_PREFIX."societe_extrafields d on c.rowid = d.fk_object
             inner join ".MAIN_DB_PREFIX."paiement_facture e on b.rowid = e.fk_facture
             left join ".MAIN_DB_PREFIX."societe f on d.invto = f.rowid
             left join ".MAIN_DB_PREFIX."societe_extrafields g on    f.rowid= g.fk_object
