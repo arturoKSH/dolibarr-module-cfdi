@@ -365,8 +365,8 @@ class ActionsCfdi
 							|| $object->statut == Facture::STATUS_CLOSED) 
 							|| ! empty($conf->global->FACTURE_SENDBYEMAIL_FOR_ALL_STATUS)
 					   ) {
-						print '<div class="inline-block divButAction"><a class="butAction'.($conf->use_javascript_ajax?' reposition':'').'" href="'.dol_escape_htmltag($_SERVER["PHP_SELF"]).'?facid='.(int)$object->id.'&amp;action=confirm_valid2">'.$langs->trans('GenerarCFDI').'</a></div>';
-						print '<div class="inline-block divButAction"><a class="butAction'.($conf->use_javascript_ajax?' reposition':'').'" href="'.dol_escape_htmltag($_SERVER["PHP_SELF"]).'?facid='.(int)$object->id.'&amp;action=Timbrar">'.$langs->trans('Timbrar').'</a></div>';
+						print '<div class="inline-block divButAction"><a class="butAction'.($conf->use_javascript_ajax?' reposition':'').'" href="'.dol_escape_htmltag($_SERVER["PHP_SELF"]).'?facid='.(int)$object->id.'&amp;action=confirm_valid2&amp;token='.newToken().'">'.$langs->trans('GenerarCFDI').'</a></div>';
+						print '<div class="inline-block divButAction"><a class="butAction'.($conf->use_javascript_ajax?' reposition':'').'" href="'.dol_escape_htmltag($_SERVER["PHP_SELF"]).'?facid='.(int)$object->id.'&amp;action=Timbrar&amp;token='.newToken().'">'.$langs->trans('Timbrar').'</a></div>';
 							
 					}
 				}else if(!empty($object->array_options['options_uuid'])){
@@ -390,7 +390,7 @@ class ActionsCfdi
 					</script>';
 					/** Evitar que se pueda modificar o Eliminar una Factura Inicio */
 
-					print '<div class="inline-block divButAction"><a class="butAction'.($conf->use_javascript_ajax?' reposition':'').'" href="'.dol_escape_htmltag($_SERVER["PHP_SELF"]).'?facid='.(int)$object->id.'&amp;action=CancelSat">'.$langs->trans('CancelarCFDI').'</a></div>';
+					print '<div class="inline-block divButAction"><a class="butAction'.($conf->use_javascript_ajax?' reposition':'').'" href="'.dol_escape_htmltag($_SERVER["PHP_SELF"]).'?facid='.(int)$object->id.'&amp;action=CancelSat&amp;token='.newToken().'">'.$langs->trans('CancelarCFDI').'</a></div>';
 				}
 			}
 			

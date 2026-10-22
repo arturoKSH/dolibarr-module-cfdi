@@ -799,9 +799,9 @@ if ($action == 'confirm_Cancel_CFDI' && $confirm == 'yes') {
          */
         
         createPem($localPht, $certName, $certPsw);
-        // OJO: $xlst viene de stampCfdi.php y apunta a origStr40.xslt (facturas).
-        // Para el complemento de pagos deberia ser /xslt/origStrPym40.xslt -- ver PR.
-        $orgStr = getOrigStr($elcInvDir, $xml, $xlst);
+        // El complemento de pagos requiere su propia cadena original SAT.
+        $paymentXlst = "/xslt/origStrPym40.xslt";
+        $orgStr = getOrigStr($elcInvDir, $xml, $paymentXlst);
         //print $orgStr;//aoz
         $linea = stampStr($localPht, $certName, $orgStr);
 
@@ -888,10 +888,10 @@ function addBtn($objsql, $id)
     print '<a class="butAction'.($conf->use_javascript_ajax?' reposition':'').'" href="'.$_SERVER['PHP_SELF'].'?id='.$id.'&amp;action=abandono" title="'.$title_button.'">'.$langs->trans('Clasificar cancelado').'</a>';
 
     if (empty($objsql[0]['uuid'])) {
-        print '<a class="butAction'.($conf->use_javascript_ajax?' reposition':'').'" href="'.$_SERVER['PHP_SELF'].'?id='.$id.'&amp;action=xml" title="'.$title_button.'">'.$langs->trans('Generar CFDI').'</a>';
+        print '<a class="butAction'.($conf->use_javascript_ajax?' reposition':'').'" href="'.$_SERVER['PHP_SELF'].'?id='.$id.'&amp;action=xml&amp;token='.newToken().'" title="'.$title_button.'">'.$langs->trans('Generar CFDI').'</a>';
     }
     if (empty($objsql[0]['uuid'])) {
-    print '<a class="butAction'.($conf->use_javascript_ajax?' reposition':'').'" href="'.$_SERVER['PHP_SELF'].'?id='.$id.'&amp;action=Timbrar" title="'.$title_button.'">'.$langs->trans('Timbrar').'</a>';
+    print '<a class="butAction'.($conf->use_javascript_ajax?' reposition':'').'" href="'.$_SERVER['PHP_SELF'].'?id='.$id.'&amp;action=Timbrar&amp;token='.newToken().'" title="'.$title_button.'">'.$langs->trans('Timbrar').'</a>';
     } else if (!empty($objsql[0]['uuid']) and empty($objCancelcfdi[0]['UUID'])) {
         print '<a class="butAction' . ($conf->use_javascript_ajax ? ' reposition' : '') . '" href="' . $_SERVER['PHP_SELF'] . '?id=' . $id . '&amp;action=Cancelcfdi" title="' . $title_button . '">' . $langs->trans('Cancelar CFDI') . '</a>';
     }
