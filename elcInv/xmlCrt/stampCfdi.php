@@ -71,12 +71,24 @@ function updCertNum($localPht,$certName)
 
 function updValConst($name,$val)
 {
-    global $db;
-    $update = "UPDATE ".MAIN_DB_PREFIX."const SET";
-    $update.= "  value = replace(replace('".$db->escape($val)."',CHAR(10),''),CHAR(13),'')";
-    $update.= " WHERE name = '".$db->escape($name)."' ";
+	global $db, $conf;
+	$entity = !empty($conf->entity) ? (int) $conf->entity : 1;
+	$nameEscaped = $db->escape($name);
+	$valueEscaped = $db->escape($val);
+	$exists = $db->query("SELECT rowid FROM ".MAIN_DB_PREFIX."const WHERE name = '".$nameEscaped."' AND entity = ".$entity);
 
-    $up = execQry($update);
+	if ($exists && $db->num_rows($exists) > 0) {
+		$update = "UPDATE ".MAIN_DB_PREFIX."const SET";
+		$update .= " value = replace(replace('".$valueEscaped."',CHAR(10),''),CHAR(13),'')";
+		$update .= " WHERE name = '".$nameEscaped."' AND entity = ".$entity;
+
+		return execQry($update);
+	}
+
+	$insert = "INSERT INTO ".MAIN_DB_PREFIX."const (name, entity, value, type, visible) VALUES (";
+	$insert .= "'".$nameEscaped."', ".$entity.", replace(replace('".$valueEscaped."',CHAR(10),''),CHAR(13),''), 'chaine', 1)";
+
+	return execQry($insert);
 }
 
 function execQry($sql)

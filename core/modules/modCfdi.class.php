@@ -450,6 +450,60 @@ class modCfdi extends DolibarrModules
 		$extrafields->addExtraField('export', 'ExtrafieldCfdiExportacion', 'select', 104, 2, 'facture', 0, 0, '01', array('options' => array('01' => 'No aplica', '02' => 'Definitiva', '03' => 'Temporal')), 1, '', 1, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
 		// Metodo de pago CFDI: PUE o PPD.
 		$extrafields->addExtraField('mofpaymt', 'ExtrafieldCfdiPaymentMethod', 'select', 105, 1, 'facture', 0, 0, '', array('options' => array('1' => 'PUE', '2' => 'PPD')), 1, '', 1, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
+		// Datos opcionales de factura global y relaciones CFDI usados por el generador.
+		$extrafields->addExtraField('periodic', 'ExtrafieldCfdiPeriodicity', 'varchar', 106, 2, 'facture', 0, 0, '', '', 1, '', 1, '', '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
+		$extrafields->addExtraField('mth', 'ExtrafieldCfdiMonths', 'varchar', 107, 2, 'facture', 0, 0, '', '', 1, '', 1, '', '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
+		$extrafields->addExtraField('peranio', 'ExtrafieldCfdiYear', 'varchar', 108, 4, 'facture', 0, 0, '', '', 1, '', 1, '', '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
+		$extrafields->addExtraField('typerelsat', 'ExtrafieldCfdiRelationType', 'sellist', 109, 2, 'facture', 0, 0, '', array('options' => array('kshtyperelsat:description:idsat::' => 'N')), 1, '', 1, '', '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
+		// Cadena original: dato interno, no debe aparecer como campo editable al usuario.
+		$extrafields->addExtraField('stampcfdi', 'ExtrafieldCfdiOriginalString', 'text', 110, 0, 'facture', 0, 0, '', '', 1, '', 0, '', '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
+		// Datos SAT de producto y linea consultados por la generación de conceptos.
+		$extrafields->addExtraField('prodservid', 'ExtrafieldCfdiProductService', 'varchar', 100, 8, 'product', 0, 0, '', '', 1, '', 1, '', '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
+		$extrafields->addExtraField('udm', 'ExtrafieldCfdiUnit', 'sellist', 101, 10, 'product', 0, 0, '', array('options' => array('c_units:code:rowid::' => 'N')), 1, '', 1, '', '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
+		$extrafields->addExtraField('taxobjct', 'ExtrafieldCfdiTaxObject', 'select', 100, 2, 'facturedet', 0, 0, '02', array('options' => array('01' => 'No objeto de impuesto', '02' => 'Sí objeto de impuesto', '03' => 'Sí objeto de impuesto y no obligado al desglose')), 1, '', 1, '', '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
+
+		// El complemento de pagos guarda su UUID en la tabla de pagos, no en una
+		// tabla de extrafields. La columna faltaba en instalaciones existentes.
+		$paymentUuidColumn = $this->db->query("SHOW COLUMNS FROM ".MAIN_DB_PREFIX."paiement LIKE 'uuid'");
+		if ($paymentUuidColumn && $this->db->num_rows($paymentUuidColumn) === 0) {
+			if (!$this->db->query("ALTER TABLE ".MAIN_DB_PREFIX."paiement ADD uuid varchar(40) NULL")) {
+				$this->error = $this->db->lasterror();
+				return -1;
+			}
+		}
+		$paymentLinkColumns = array(
+			'num_parcial' => 'int NULL DEFAULT 1',
+			'fk_fac_delete' => 'int NULL DEFAULT NULL',
+			'status' => 'tinyint NOT NULL DEFAULT 0',
+		);
+		foreach ($paymentLinkColumns as $columnName => $columnDefinition) {
+			$paymentLinkColumn = $this->db->query("SHOW COLUMNS FROM ".MAIN_DB_PREFIX."paiement_facture LIKE '".$this->db->escape($columnName)."'");
+			if ($paymentLinkColumn && $this->db->num_rows($paymentLinkColumn) === 0) {
+				if (!$this->db->query("ALTER TABLE ".MAIN_DB_PREFIX."paiement_facture ADD ".$columnName." ".$columnDefinition)) {
+					$this->error = $this->db->lasterror();
+					return -1;
+				}
+			}
+		}
+
+		// Claves SAT de forma de pago y unidad: los códigos de Dolibarr (VIR, KG...) no son claves SAT.
+		$satColumns = array(
+			'c_paiement' => array('code_sat', 'varchar(2) NULL'),
+			'c_units' => array('UOMId', 'varchar(5) NULL'),
+		);
+		foreach ($satColumns as $table => $column) {
+			$satColumn = $this->db->query("SHOW COLUMNS FROM ".MAIN_DB_PREFIX.$table." LIKE '".$column[0]."'");
+			if ($satColumn && $this->db->num_rows($satColumn) === 0) {
+				if (!$this->db->query("ALTER TABLE ".MAIN_DB_PREFIX.$table." ADD ".$column[0]." ".$column[1])) {
+					$this->error = $this->db->lasterror();
+					return -1;
+				}
+			}
+		}
+		$paymentSatCodes = array('LIQ' => '01', 'CHQ' => '02', 'VIR' => '03', 'CB' => '04');
+		foreach ($paymentSatCodes as $code => $codeSat) {
+			$this->db->query("UPDATE ".MAIN_DB_PREFIX."c_paiement SET code_sat = '".$codeSat."' WHERE code = '".$code."' AND (code_sat IS NULL OR code_sat = '')");
+		}
 
 		// Permissions
 		$this->remove($options);

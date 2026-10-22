@@ -103,7 +103,7 @@
 	 */
 	public function __construct()
 	{
-		global $conf, $langs, $mysoc;
+		global $conf, $langs, $mysoc, $db;
 
 		// Translations
 		$langs->loadLangs(array("main", "bills"));
@@ -184,6 +184,25 @@
 		$this->atleastoneratenotnull=0;
 		$this->atleastonediscount=0;
 		$this->situationinvoice=false;
+	}
+
+	/**
+	 * Compatibilidad con el contrato de modelos PDF de Dolibarr 22+.
+	 * El módulo conserva su generador histórico en generar().
+	 *
+	 * @param  Facture   $object           Factura a generar
+	 * @param  Translate $outputlangs      Idioma de salida
+	 * @param  string    $srctemplatepath  Plantilla fuente (no usada)
+	 * @param  int       $hidedetails      Ocultar detalle (no usado)
+	 * @param  int       $hidedesc         Ocultar descripción (no usado)
+	 * @param  int       $hideref          Ocultar referencia (no usado)
+	 * @return int
+	 */
+	public function write_file($object, $outputlangs, $srctemplatepath = '', $hidedetails = 0, $hidedesc = 0, $hideref = 0)
+	{
+		global $db;
+
+		return $this->generar($object->id, $outputlangs, $db, $object->ref);
 	}
 	public  function generar($id,$outputlangs,$db,$ref)
 	{

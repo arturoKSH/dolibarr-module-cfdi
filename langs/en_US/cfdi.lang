@@ -145,6 +145,14 @@ ExtrafieldCfdiInvoiceTo = Alternate CFDI recipient
 ExtrafieldCfdiSerie = CFDI series
 ExtrafieldCfdiExportacion = CFDI exportation
 ExtrafieldCfdiPaymentMethod = CFDI payment method
+ExtrafieldCfdiPeriodicity = CFDI periodicity
+ExtrafieldCfdiMonths = CFDI months
+ExtrafieldCfdiYear = CFDI year
+ExtrafieldCfdiRelationType = CFDI relationship type
+ExtrafieldCfdiOriginalString = CFDI original string
+ExtrafieldCfdiProductService = SAT product/service code
+ExtrafieldCfdiUnit = SAT unit
+ExtrafieldCfdiTaxObject = SAT tax object
 
 
 #
