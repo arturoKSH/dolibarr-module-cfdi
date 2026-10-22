@@ -144,7 +144,7 @@ class modCfdi extends DolibarrModules
 		$this->langfiles = array("cfdi@cfdi");
 
 		// Prerequisites
-		$this->phpmin = array(7, 0); // Minimum version of PHP required by module
+		$this->phpmin = array(7, 2); // Minimum version of PHP required by module
 		$this->need_dolibarr_version = array(11, -3); // Minimum version of Dolibarr required by module
 
 		// Messages at activation
@@ -441,15 +441,15 @@ class modCfdi extends DolibarrModules
 		$extrafields->addExtraField('propouse', 'ExtrafieldCfdiPropouse', 'sellist', 102, 20, 'facture', 0, 0, '', array('options' => array('usocfdi:Descripcion:usocfdi_id::' => 'N')), 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
 		$extrafields->addExtraField('propouse', 'ExtrafieldCfdiPropouse', 'sellist', 1, 20, 'thirdparty', 0, 0, '', array('options' => array('usocfdi:Descripcion:usocfdi_id::' => 'N')), 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
 		// Regimen fiscal del receptor, con catalogo SAT del modulo.
-		$extrafields->addExtraField('fiscalreg', 'ExtrafieldCfdiFiscalRegimen', 'sellist', 2, 10, 'thirdparty', 0, 0, '', array('options' => array('FiscalRegimen:fiscalreg:description::' => 'N')), 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
+		$extrafields->addExtraField('fiscalreg', 'ExtrafieldCfdiFiscalRegimen', 'sellist', 2, 10, 'thirdparty', 0, 0, '', array('options' => array('FiscalRegimen:description:fiscalreg::' => 'N')), 1, '', 1, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
 		// Receptor alterno de la factura (por ejemplo, una sucursal o razon social).
-		$extrafields->addExtraField('invto', 'ExtrafieldCfdiInvoiceTo', 'sellist', 3, 10, 'thirdparty', 0, 0, '', array('options' => array('societe:nom:rowid::' => 'N')), 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
+		$extrafields->addExtraField('invto', 'ExtrafieldCfdiInvoiceTo', 'sellist', 3, 10, 'thirdparty', 0, 0, '', array('options' => array('societe:nom:rowid::' => 'N')), 1, '', 1, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
 		// Serie CFDI del documento.
-		$extrafields->addExtraField('serie', 'ExtrafieldCfdiSerie', 'sellist', 103, 10, 'facture', 0, 0, '', array('options' => array('serie:serie:rowid::' => 'N')), 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
+		$extrafields->addExtraField('serie', 'ExtrafieldCfdiSerie', 'sellist', 103, 10, 'facture', 0, 0, '', array('options' => array('serie:serie:rowid::' => 'N')), 1, '', 1, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
 		// Exportacion CFDI 4.0.
-		$extrafields->addExtraField('export', 'ExtrafieldCfdiExportacion', 'select', 104, 2, 'facture', 0, 0, '01', array('options' => array('01' => 'No aplica', '02' => 'Definitiva', '03' => 'Temporal')), 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
+		$extrafields->addExtraField('export', 'ExtrafieldCfdiExportacion', 'select', 104, 2, 'facture', 0, 0, '01', array('options' => array('01' => 'No aplica', '02' => 'Definitiva', '03' => 'Temporal')), 1, '', 1, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
 		// Metodo de pago CFDI: PUE o PPD.
-		$extrafields->addExtraField('mofpaymt', 'ExtrafieldCfdiPaymentMethod', 'select', 105, 1, 'facture', 0, 0, '', array('options' => array('1' => 'PUE', '2' => 'PPD')), 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
+		$extrafields->addExtraField('mofpaymt', 'ExtrafieldCfdiPaymentMethod', 'select', 105, 1, 'facture', 0, 0, '', array('options' => array('1' => 'PUE', '2' => 'PPD')), 1, '', 1, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
 		// Datos opcionales de factura global y relaciones CFDI usados por el generador.
 		$extrafields->addExtraField('periodic', 'ExtrafieldCfdiPeriodicity', 'varchar', 106, 2, 'facture', 0, 0, '', '', 1, '', 1, '', '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
 		$extrafields->addExtraField('mth', 'ExtrafieldCfdiMonths', 'varchar', 107, 2, 'facture', 0, 0, '', '', 1, '', 1, '', '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
