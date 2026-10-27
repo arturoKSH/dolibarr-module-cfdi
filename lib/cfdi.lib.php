@@ -210,6 +210,18 @@ function cfdiMigrateLegacyCertDir($certName)
 }
 
 /**
+ * Envuelve un archivo DER (.cer o .key del SAT) en formato PEM.
+ *
+ * @param  string $der   Contenido binario
+ * @param  string $label Etiqueta PEM, ej. 'CERTIFICATE' o 'ENCRYPTED PRIVATE KEY'
+ * @return string
+ */
+function cfdiDerToPem($der, $label)
+{
+	return "-----BEGIN ".$label."-----\n".chunk_split(base64_encode($der), 64, "\n")."-----END ".$label."-----\n";
+}
+
+/**
  * Lee un .cer (DER o PEM) y devuelve info del certificado o array con error.
  *
  * @param  string $certName Nombre saneado del certificado (ver MAIN_INFO_CFDI_CERT_NAME)
@@ -232,7 +244,7 @@ function cfdiParseCert($certName)
 	} elseif (file_exists($derFile)) {
 		$der = file_get_contents($derFile);
 		if ($der !== false) {
-			$pem = "-----BEGIN CERTIFICATE-----\n".chunk_split(base64_encode($der), 64, "\n")."-----END CERTIFICATE-----\n";
+			$pem = cfdiDerToPem($der, 'CERTIFICATE');
 		}
 	}
 
@@ -292,4 +304,88 @@ function cfdiLogError($db, $action, $invoiceRef, $errmsg, $fkFacture = 0)
 	$sql .= ")";
 
 	$db->query($sql);
+}
+
+/**
+ * Extrafields que el módulo necesita para timbrar. Única fuente: la usan modCfdi::init()
+ * para crearlos/corregirlos y admin/test.php para el diagnóstico.
+ *
+ * @return array<string, array<string, array{label:string, type:string, pos:int, size:int, param:array|string, default:string, list:int, alwayseditable:int}>>
+ */
+function cfdiRequiredExtrafields()
+{
+	return array(
+		'facture' => array(
+			// Cadena original: dato interno, no debe aparecer como campo editable al usuario.
+			'stampcfdi' => array('label' => 'ExtrafieldCfdiOriginalString', 'type' => 'text', 'pos' => 100, 'size' => 8000, 'param' => '', 'default' => '', 'list' => 0, 'alwayseditable' => 1),
+			// Almacen (rowid) usado para el movimiento de stock al cancelar en el SAT
+			'warehouse' => array('label' => 'ExtrafieldCfdiWarehouse', 'type' => 'int', 'pos' => 100, 'size' => 10, 'param' => '', 'default' => '', 'list' => 0, 'alwayseditable' => 1),
+			'typerelsat' => array('label' => 'ExtrafieldCfdiRelationType', 'type' => 'sellist', 'pos' => 100, 'size' => 2, 'param' => array('options' => array('kshtyperelsat:description:idsat::' => 'N')), 'default' => '', 'list' => 1, 'alwayseditable' => 0),
+			'mofpaymt' => array('label' => 'ExtrafieldCfdiPaymentMethod', 'type' => 'select', 'pos' => 101, 'size' => 1, 'param' => array('options' => array('1' => 'PUE', '2' => 'PPD')), 'default' => '', 'list' => 1, 'alwayseditable' => 0),
+			// Uso de CFDI (catalogo SAT en llx_usocfdi)
+			'propouse' => array('label' => 'ExtrafieldCfdiPropouse', 'type' => 'sellist', 'pos' => 102, 'size' => 20, 'param' => array('options' => array('usocfdi:Descripcion:usocfdi_id::' => 'N')), 'default' => '', 'list' => 1, 'alwayseditable' => 0),
+			'serie' => array('label' => 'ExtrafieldCfdiSerie', 'type' => 'sellist', 'pos' => 103, 'size' => 10, 'param' => array('options' => array('serie:serie:rowid::status=1' => 'N')), 'default' => '', 'list' => 1, 'alwayseditable' => 0),
+			'export' => array('label' => 'ExtrafieldCfdiExportacion', 'type' => 'select', 'pos' => 104, 'size' => 2, 'param' => array('options' => array('01' => 'No aplica', '02' => 'Definitiva', '03' => 'Temporal')), 'default' => '01', 'list' => 1, 'alwayseditable' => 0),
+			// Factura global (catalogos SAT c_Periodicidad y c_Meses)
+			'periodic' => array('label' => 'ExtrafieldCfdiPeriodicity', 'type' => 'select', 'pos' => 105, 'size' => 2, 'param' => array('options' => array(
+				'01' => 'Diario', '02' => 'Semanal', '03' => 'Quincenal', '04' => 'Mensual', '05' => 'Bimestral',
+			)), 'default' => '', 'list' => 1, 'alwayseditable' => 0),
+			'mth' => array('label' => 'ExtrafieldCfdiMonths', 'type' => 'select', 'pos' => 106, 'size' => 2, 'param' => array('options' => array(
+				'01' => 'Enero', '02' => 'Febrero', '03' => 'Marzo', '04' => 'Abril', '05' => 'Mayo', '06' => 'Junio',
+				'07' => 'Julio', '08' => 'Agosto', '09' => 'Septiembre', '10' => 'Octubre', '11' => 'Noviembre', '12' => 'Diciembre',
+				'13' => 'Enero-Febrero', '14' => 'Marzo-Abril', '15' => 'Mayo-Junio', '16' => 'Julio-Agosto', '17' => 'Septiembre-Octubre', '18' => 'Noviembre-Diciembre',
+			)), 'default' => '', 'list' => 1, 'alwayseditable' => 0),
+			'peranio' => array('label' => 'ExtrafieldCfdiYear', 'type' => 'int', 'pos' => 107, 'size' => 10, 'param' => '', 'default' => '', 'list' => 1, 'alwayseditable' => 0),
+			// UUID del CFDI timbrado: lo llena el timbrado, solo se muestra en ficha y lista
+			'uuid' => array('label' => 'ExtrafieldCfdiUuid', 'type' => 'text', 'pos' => 108, 'size' => 2000, 'param' => '', 'default' => '', 'list' => 4, 'alwayseditable' => 0),
+		),
+		'societe' => array(
+			// Uso de CFDI por defecto del cliente; el trigger BILL_CREATE lo copia a la factura
+			'propouse' => array('label' => 'ExtrafieldCfdiPropouse', 'type' => 'sellist', 'pos' => 100, 'size' => 20, 'param' => array('options' => array('usocfdi:Descripcion:usocfdi_id::' => 'N')), 'default' => '', 'list' => 1, 'alwayseditable' => 1),
+			// Regimen fiscal del receptor (RegimenFiscalReceptor)
+			'fiscalreg' => array('label' => 'ExtrafieldCfdiFiscalRegimen', 'type' => 'sellist', 'pos' => 2, 'size' => 10, 'param' => array('options' => array('FiscalRegimen:description:fiscalreg::' => 'N')), 'default' => '', 'list' => 1, 'alwayseditable' => 1),
+			// Receptor alterno: excFetch.php toma nombre, RFC, CP y regimen de este tercero si esta lleno
+			'invto' => array('label' => 'ExtrafieldCfdiInvoiceTo', 'type' => 'sellist', 'pos' => 3, 'size' => 10, 'param' => array('options' => array('societe:nom:rowid::' => 'N')), 'default' => '', 'list' => 1, 'alwayseditable' => 1),
+			'mofpaymt' => array('label' => 'ExtrafieldCfdiPaymentMethod', 'type' => 'select', 'pos' => 100, 'size' => 1, 'param' => array('options' => array('1' => 'PUE', '2' => 'PPD')), 'default' => '', 'list' => 1, 'alwayseditable' => 1),
+		),
+		'product' => array(
+			// ClaveProdServ del SAT; si esta vacio el XML manda 01010101
+			'prodservid' => array('label' => 'ExtrafieldCfdiProductService', 'type' => 'varchar', 'pos' => 100, 'size' => 8, 'param' => '', 'default' => '', 'list' => 1, 'alwayseditable' => 1),
+			// ClaveUnidad y Unidad salen de c_units (UOMId y code) por el rowid guardado
+			'udm' => array('label' => 'ExtrafieldCfdiUnit', 'type' => 'sellist', 'pos' => 100, 'size' => 10, 'param' => array('options' => array('c_units:label:rowid::' => 'N')), 'default' => '', 'list' => 1, 'alwayseditable' => 1),
+			'taxobjct' => array('label' => 'ExtrafieldCfdiTaxObject', 'type' => 'select', 'pos' => 100, 'size' => 2, 'param' => array('options' => array('01' => 'No objeto de impuesto', '02' => 'Sí objeto de impuesto', '03' => 'Sí objeto de impuesto y no obligado al desglose')), 'default' => '02', 'list' => 1, 'alwayseditable' => 1),
+		),
+		'facturedet' => array(
+			// ObjetoImp de la linea (lo lee el PDF)
+			'taxobjct' => array('label' => 'ExtrafieldCfdiTaxObject', 'type' => 'select', 'pos' => 100, 'size' => 2, 'param' => array('options' => array('01' => 'No objeto de impuesto', '02' => 'Sí objeto de impuesto', '03' => 'Sí objeto de impuesto y no obligado al desglose')), 'default' => '02', 'list' => 1, 'alwayseditable' => 1),
+		),
+	);
+}
+
+/**
+ * Columnas que el módulo agrega a tablas de Dolibarr (no son extrafields). Única fuente: la usan
+ * modCfdi::init() para crearlas y admin/test.php para el diagnóstico.
+ *
+ * @return array<string, array<string, string>> tabla (sin prefijo) => columna => definición SQL
+ */
+function cfdiRequiredColumns()
+{
+	return array(
+		// UUID del complemento de pago
+		'paiement' => array(
+			'uuid' => 'varchar(40) NULL',
+		),
+		'paiement_facture' => array(
+			'num_parcial' => 'int NULL DEFAULT 1',
+			'fk_fac_delete' => 'int NULL DEFAULT NULL',
+			'status' => 'tinyint NOT NULL DEFAULT 0',
+		),
+		// Claves SAT de forma de pago y unidad: los códigos de Dolibarr (VIR, KG...) no son claves SAT.
+		'c_paiement' => array(
+			'code_sat' => 'varchar(2) NULL',
+		),
+		'c_units' => array(
+			'UOMId' => 'varchar(5) NULL',
+		),
+	);
 }

@@ -30,6 +30,7 @@ Settings = Settings
 CfdiSetupPage = Cfdi setup page
 CfdiPacUser = PAC Username
 CfdiPacPassword = PAC Password
+CfdiPacPasswordKeep = Leave empty to keep the current one
 CFDI_PAC_USER = PAC Username
 CFDI_PAC_PASSWORD = PAC Password
 UploadCertAndKey = Upload Certificate and Key
@@ -65,10 +66,12 @@ CfdiStampUrlTest = Stamping URL (Test)
 CfdiStampUrlProd = Stamping URL (Production)
 CfdiCancelUrlTest = Cancellation URL (Test)
 CfdiCancelUrlProd = Cancellation URL (Production)
-CfdiPacProvider = PAC provider (reference)
+CfdiPacProvider = PAC provider
 CfdiPacProviderHelp = Informational only unless you also adjust the SOAP namespace/method below.
 CfdiSoapNamespace = PAC SOAP namespace
 CfdiSoapMethod = Stamping SOAP method
+CfdiTimeAdjustHours = Issue time adjustment (hours)
+CfdiTimeAdjustHoursHelp = Hours added to or subtracted from the CFDI date (Mexico time). Use it only if the PAC says the issue date is out of range: for example -2 subtracts 2 hours. Normally leave it at 0.
 
 #
 # Diagnostics page
@@ -112,14 +115,29 @@ CfdiCatalogFiscalRegimen = Fiscal regimes
 CfdiCatalogTypeRelSat = SAT relationship types
 CfdiCatalogSerie = Folio series
 CfdiCatalogCancelaciones = Registered cancellations
+CfdiCatalogErrorLog = Stamping and cancellation error log
+CfdiCatalogInvoiceRel = Related CFDI of invoices
+CfdiCatalogPayRel = Related CFDI of payment complements
+CfdiCatalogUsedByExtrafield = Catalog of extrafield %s
 CfdiCatalogAceptaciones = Acceptances / Rejections
 CfdiCatalogRelaciones = Related CFDIs
+CfdiPhpExtensionsTitle = PHP extensions
+CfdiRequiredColumnsTitle = Module columns in Dolibarr tables
+CfdiVatRatesTitle = VAT rates
+CfdiVatRateCol = Rate
+CfdiVatCodeCol = Code
+CfdiVatCodeMissing = No IVA/IEP code: lines with this rate are stamped without taxes and the PAC rejects them
 CfdiExtrafieldsFacturasTitle = Invoice Extrafields
+CfdiExtrafieldsTercerosTitle = Third party Extrafields
+CfdiExtrafieldsProductosTitle = Product Extrafields
+CfdiExtrafieldsLineasTitle = Invoice line Extrafields
 CfdiNameCol = Name
 CfdiLabelCol = Label
 CfdiTypeCol = Type
-CfdiDbColumn = DB column
-CfdiNoExtrafieldsDefined = No extrafields defined for invoices in llx_extrafields.
+CfdiExtrafieldMissing = Extrafield not declared
+CfdiExtrafieldNoColumn = Declared, but the DB column is missing
+CfdiExtrafieldWrongType = Type %s, must be %s
+CfdiExtrafieldsFixHint = To fix it, disable and enable the CFDI module again.
 
 #
 # Error log page
@@ -176,3 +194,25 @@ MyWidgetDescription = My widget description
 
 # Certificate migration to DOL_DATA_ROOT
 CfdiCertMigratedToDataRoot = Certificates were moved to a private directory outside custom/ (DOL_DATA_ROOT/cfdi/certs).
+
+# Configuración: certificado y PAC
+CfdiCertTitle = SAT certificate
+CfdiCertExpiresOn = Expires on %s
+CfdiCertValid = Valid
+CfdiCertExpiresIn = Expires in %s days
+CfdiCertExpired = Expired
+CfdiCertNoExpiry = Date not saved: upload the certificate again
+CfdiCertReplace = Replace certificate
+CfdiCertDownload = Download
+CfdiCertDelete = Delete
+CfdiCertMissing = There is no certificate. Without it you cannot stamp.
+CfdiCertFileCer = Certificate (.cer)
+CfdiCertFileKey = Private key (.key)
+CfdiCertUpload = Upload certificate
+CfdiCertFilesRequired = The certificate (.cer) and the private key (.key) are required.
+CfdiCertBadExtension = Invalid extensions. Expected .cer and .key.
+CfdiCertKeyMismatch = The private key does not match the certificate.
+CfdiPacTitle = PAC connection
+CfdiAdvancedOptions = Advanced options
+CfdiCertHistory = Certificate history (%s)
+CfdiDefaultValue = %s (default)
