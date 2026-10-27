@@ -30,6 +30,7 @@ Settings = Réglages
 CfdiSetupPage = Page de configuration du module Cfdi
 CfdiPacUser = Utilisateur PAC
 CfdiPacPassword = Mot de passe PAC
+CfdiPacPasswordKeep = Laisser vide pour conserver l'actuel
 CFDI_PAC_USER = Utilisateur PAC
 CFDI_PAC_PASSWORD = Mot de passe PAC
 UploadCertAndKey = Télécharger le certificat et la clé
@@ -65,10 +66,12 @@ CfdiStampUrlTest = URL de tamponnage (Test)
 CfdiStampUrlProd = URL de tamponnage (Production)
 CfdiCancelUrlTest = URL d'annulation (Test)
 CfdiCancelUrlProd = URL d'annulation (Production)
-CfdiPacProvider = Fournisseur PAC (référence)
+CfdiPacProvider = Fournisseur PAC
 CfdiPacProviderHelp = Informatif seulement, sauf si vous ajustez aussi le namespace/methode SOAP ci-dessous.
 CfdiSoapNamespace = Namespace SOAP du PAC
 CfdiSoapMethod = Methode SOAP de tamponnage
+CfdiTimeAdjustHours = Ajustement de l'heure d'émission (heures)
+CfdiTimeAdjustHoursHelp = Heures ajoutées ou retirées à la date du CFDI (heure du Mexique). À utiliser seulement si le PAC indique une date hors plage : par exemple -2 retire 2 heures. Normalement 0.
 
 #
 # Diagnostics page
@@ -112,14 +115,29 @@ CfdiCatalogFiscalRegimen = Régimes fiscaux
 CfdiCatalogTypeRelSat = Types de relation SAT
 CfdiCatalogSerie = Séries de folio
 CfdiCatalogCancelaciones = Annulations enregistrées
+CfdiCatalogErrorLog = Journal des erreurs de timbrage et d'annulation
+CfdiCatalogInvoiceRel = CFDI liés des factures
+CfdiCatalogPayRel = CFDI liés des compléments de paiement
+CfdiCatalogUsedByExtrafield = Catalogue de l'extrafield %s
 CfdiCatalogAceptaciones = Acceptations / Rejets
 CfdiCatalogRelaciones = CFDI liés
+CfdiPhpExtensionsTitle = Extensions PHP
+CfdiRequiredColumnsTitle = Colonnes du module dans les tables Dolibarr
+CfdiVatRatesTitle = Taux de TVA
+CfdiVatRateCol = Taux
+CfdiVatCodeCol = Code
+CfdiVatCodeMissing = Sans code IVA/IEP : les lignes avec ce taux sont timbrées sans impôts et le PAC les rejette
 CfdiExtrafieldsFacturasTitle = Extrafields de facture
+CfdiExtrafieldsTercerosTitle = Extrafields de tiers
+CfdiExtrafieldsProductosTitle = Extrafields de produits
+CfdiExtrafieldsLineasTitle = Extrafields de lignes de facture
 CfdiNameCol = Nom
 CfdiLabelCol = Étiquette
 CfdiTypeCol = Type
-CfdiDbColumn = Colonne BD
-CfdiNoExtrafieldsDefined = Aucun extrafield défini pour les factures dans llx_extrafields.
+CfdiExtrafieldMissing = Extrafield non déclaré
+CfdiExtrafieldNoColumn = Déclaré, mais la colonne BD manque
+CfdiExtrafieldWrongType = Type %s, doit être %s
+CfdiExtrafieldsFixHint = Pour corriger, désactivez puis réactivez le module CFDI.
 
 #
 # Error log page
@@ -174,3 +192,25 @@ MyWidgetDescription = Description de mon widget
 
 # Migration des certificats vers DOL_DATA_ROOT
 CfdiCertMigratedToDataRoot = Les certificats ont ete deplaces vers un repertoire prive hors de custom/ (DOL_DATA_ROOT/cfdi/certs).
+
+# Configuración: certificado y PAC
+CfdiCertTitle = Certificat SAT
+CfdiCertExpiresOn = Expire le %s
+CfdiCertValid = Valide
+CfdiCertExpiresIn = Expire dans %s jours
+CfdiCertExpired = Expiré
+CfdiCertNoExpiry = Date non enregistrée : téléversez à nouveau le certificat
+CfdiCertReplace = Remplacer le certificat
+CfdiCertDownload = Télécharger
+CfdiCertDelete = Supprimer
+CfdiCertMissing = Aucun certificat. Sans lui, impossible de timbrer.
+CfdiCertFileCer = Certificat (.cer)
+CfdiCertFileKey = Clé privée (.key)
+CfdiCertUpload = Téléverser le certificat
+CfdiCertFilesRequired = Le certificat (.cer) et la clé privée (.key) sont requis.
+CfdiCertBadExtension = Extensions invalides. Attendu : .cer et .key.
+CfdiCertKeyMismatch = La clé privée ne correspond pas au certificat.
+CfdiPacTitle = Connexion au PAC
+CfdiAdvancedOptions = Options avancées
+CfdiCertHistory = Historique des certificats (%s)
+CfdiDefaultValue = %s (par défaut)

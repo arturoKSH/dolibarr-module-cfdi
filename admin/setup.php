@@ -112,10 +112,24 @@ $item = $formSetup->newItem('CFDI_PAC_USER');
 $item->nameText = $langs->transnoentities('CfdiPacUser');
 $item->cssClass = 'minwidth300';
 
+// La contraseña nunca se manda al navegador: el campo va vacío y, si se deja así, se conserva
+// la guardada. dolibarr_set_const() la cifra por el sufijo _PASSWORD.
 $item = $formSetup->newItem('CFDI_PAC_PASSWORD');
 $item->nameText = $langs->transnoentities('CfdiPacPassword');
-$item->setAsSecureKey();
-$item->cssClass = 'minwidth300';
+$item->setAsGenericPassword();
+$item->fieldInputOverride = '<input type="password" name="CFDI_PAC_PASSWORD" class="flat minwidth300" value="" autocomplete="new-password" placeholder="'.dol_escape_htmltag($langs->trans('CfdiPacPasswordKeep')).'">';
+$item->fieldOutputOverride = getDolGlobalString('CFDI_PAC_PASSWORD') !== '' ? '********' : '';
+$pacPasswordItem = $item;
+$item->setValueFromPostCallBack(function () use ($pacPasswordItem) {
+	$pacPasswordItem->fieldValue = GETPOST('CFDI_PAC_PASSWORD', 'none');
+	return 1;
+});
+$item->saveCallBack = function ($item) use ($db, $conf) {
+	if ($item->fieldValue === '') {
+		return 1;
+	}
+	return dolibarr_set_const($db, 'CFDI_PAC_PASSWORD', $item->fieldValue, 'chaine', 0, '', $conf->entity) >= 0 ? 1 : -1;
+};
 
 // Ambiente de timbrado
 $currentEnv = !empty($conf->global->CFDI_ENV) ? $conf->global->CFDI_ENV : 'test';
@@ -167,6 +181,20 @@ $item->nameText = $langs->trans('CfdiSoapMethod');
 $item->cssClass = 'minwidth300';
 $item->fieldAttr = array('placeholder' => 'GeneraTimbre');
 
+// Ajuste manual de la hora de emisión, para servidores con el reloj o la zona mal (ej. IONOS).
+$item = $formSetup->newItem('CFDI_TIME_ADJUST_HOURS');
+$item->nameText = $langs->trans('CfdiTimeAdjustHours');
+$item->setAsNumber(-23, 23, 1);
+$item->helpText = $langs->trans('CfdiTimeAdjustHoursHelp');
+
+
+// Campo vacío = el código usa su valor por defecto: se muestra en gris para que no parezca un hueco.
+foreach ($formSetup->items as $setupItem) {
+	$defaultValue = $setupItem->fieldAttr['placeholder'] ?? '';
+	if ($defaultValue !== '' && getDolGlobalString($setupItem->confKey) === '') {
+		$setupItem->fieldOutputOverride = '<span class="opacitymedium">'.dol_escape_htmltag($langs->trans('CfdiDefaultValue', $defaultValue)).'</span>';
+	}
+}
 
 $setupnotempty += count($formSetup->items);
 
@@ -305,38 +333,31 @@ if ($action == 'savecert' && $user->admin) {
         }
         if (!$pwdOk) {
             setEventMessages('Contraseña de confirmación incorrecta.', null, 'errors');
-        } elseif (
-            empty($_FILES['cert_cer']['name'])     || empty($_FILES['cert_key']['name']) ||
-            empty($_FILES['cert_cer_pem']['name']) || empty($_FILES['cert_key_pem']['name'])
-        ) {
-            setEventMessages('Se requieren los 4 archivos: .cer, .cer.pem, .key y .key.pem', null, 'errors');
+        } elseif (empty($_FILES['cert_cer']['name']) || empty($_FILES['cert_key']['name'])) {
+            setEventMessages($langs->trans('CfdiCertFilesRequired'), null, 'errors');
         } else {
-            $cer    = $_FILES['cert_cer'];
-            $key    = $_FILES['cert_key'];
-            $cerPem = $_FILES['cert_cer_pem'];
-            $keyPem = $_FILES['cert_key_pem'];
+            $cer = $_FILES['cert_cer'];
+            $key = $_FILES['cert_key'];
 
-            $extCer    = strtolower(pathinfo($cer['name'],    PATHINFO_EXTENSION));
-            $extKey    = strtolower(pathinfo($key['name'],    PATHINFO_EXTENSION));
-            $extCerPem = strtolower(pathinfo($cerPem['name'], PATHINFO_EXTENSION));
-            $extKeyPem = strtolower(pathinfo($keyPem['name'], PATHINFO_EXTENSION));
+            $extCer = strtolower(pathinfo($cer['name'], PATHINFO_EXTENSION));
+            $extKey = strtolower(pathinfo($key['name'], PATHINFO_EXTENSION));
 
-            if ($extCer !== 'cer' || $extKey !== 'key' || $extCerPem !== 'pem' || $extKeyPem !== 'pem') {
-                setEventMessages('Extensiones inválidas. Se esperan: .cer  .cer.pem  .key  .key.pem', null, 'errors');
-            } elseif (
-                $cer['error'] !== UPLOAD_ERR_OK    || $key['error'] !== UPLOAD_ERR_OK ||
-                $cerPem['error'] !== UPLOAD_ERR_OK || $keyPem['error'] !== UPLOAD_ERR_OK
-            ) {
+            if ($extCer !== 'cer' || $extKey !== 'key') {
+                setEventMessages($langs->trans('CfdiCertBadExtension'), null, 'errors');
+            } elseif ($cer['error'] !== UPLOAD_ERR_OK || $key['error'] !== UPLOAD_ERR_OK) {
                 setEventMessages($langs->trans('UploadError'), null, 'errors');
             } else {
-                $cerPemContent = file_get_contents($cerPem['tmp_name']);
-                $keyPemContent = file_get_contents($keyPem['tmp_name']);
-
-                // Validar con archivos PEM (PHP OpenSSL los lee nativamente sin conversión)
-                $certRes = ($cerPemContent !== false) ? @openssl_x509_read($cerPemContent) : false;
-                $pkeyRes = ($keyPemContent !== false) ? @openssl_pkey_get_private($keyPemContent, $certPsw) : false;
+                // Los .pem se generan aquí a partir del .cer (DER) y del .key (PKCS8 cifrado del SAT).
+                $cerPemContent = cfdiDerToPem((string) file_get_contents($cer['tmp_name']), 'CERTIFICATE');
+                $certRes = @openssl_x509_read($cerPemContent);
+                $pkeyRes = @openssl_pkey_get_private(cfdiDerToPem((string) file_get_contents($key['tmp_name']), 'ENCRYPTED PRIVATE KEY'), $certPsw);
+                $keyPemContent = '';
 
                 if ($certRes === false || $pkeyRes === false) {
+                    setEventMessages($langs->trans('InvalidCertOrPassword'), null, 'errors');
+                } elseif (!openssl_x509_check_private_key($certRes, $pkeyRes)) {
+                    setEventMessages($langs->trans('CfdiCertKeyMismatch'), null, 'errors');
+                } elseif (!openssl_pkey_export($pkeyRes, $keyPemContent)) {
                     setEventMessages($langs->trans('InvalidCertOrPassword'), null, 'errors');
                 } else {
                     // Nombre saneado: solo alfanumérico, guion y guion bajo
@@ -359,10 +380,11 @@ if ($action == 'savecert' && $user->admin) {
                     $dstKey    = cfdiCertFile($certName, '.key');
                     $dstKeyPem = cfdiCertFile($certName, '.key.pem');
 
-                    $okCer    = move_uploaded_file($cer['tmp_name'],    $dstCer);
-                    $okCerPem = move_uploaded_file($cerPem['tmp_name'], $dstCerPem);
-                    $okKey    = move_uploaded_file($key['tmp_name'],    $dstKey);
-                    $okKeyPem = move_uploaded_file($keyPem['tmp_name'], $dstKeyPem);
+                    $okCer    = move_uploaded_file($cer['tmp_name'], $dstCer);
+                    $okKey    = move_uploaded_file($key['tmp_name'], $dstKey);
+                    $okCerPem = file_put_contents($dstCerPem, $cerPemContent) !== false;
+                    // La llave PEM queda sin contraseña (stampStr() la lee así): solo permisos del dueño.
+                    $okKeyPem = file_put_contents($dstKeyPem, $keyPemContent) !== false && chmod($dstKeyPem, 0600);
 
                     if ($okCer && $okCerPem && $okKey && $okKeyPem) {
                         // Si habia un certificado anterior con otro nombre, limpiar su carpeta (evita huerfanos)
@@ -446,39 +468,6 @@ if ($action == 'deletecert' && $user->admin) {
 }
 // ---------- fin: handler para eliminar el certificado configurado ----------
 
-// ---------- inicio: handler para mostrar contraseña del certificado ----------
-if ($action == 'showpsw' && $user->admin) {
-    if (empty($_REQUEST['token']) || $_REQUEST['token'] !== $_SESSION['newtoken']) {
-        setEventMessages($langs->trans('ErrorBadToken'), null, 'errors');
-    } else {
-        $confirmPwd = GETPOST('confirm_password', 'none');
-        $tmpUser = new User($db);
-        $tmpUser->fetch($user->id);
-        $storedHash = !empty($tmpUser->pass_indatabase_crypted) ? $tmpUser->pass_indatabase_crypted : $tmpUser->pass_crypted;
-        if (function_exists('dol_verifyHash')) {
-            $pwdOk = !empty($confirmPwd) && dol_verifyHash($confirmPwd, $storedHash);
-        } else {
-            $pwdOk = !empty($confirmPwd) && (
-                password_verify($confirmPwd, $storedHash) ||
-                dol_hash($confirmPwd) === $storedHash
-            );
-        }
-        if (!$pwdOk) {
-            setEventMessages('Contraseña de confirmación incorrecta.', null, 'errors');
-        } else {
-            $encryptedPsw = getDolGlobalString('MAIN_INFO_CFDI_CERT_PSW');
-            if (!empty($encryptedPsw)) {
-                $_SESSION['cfdi_decrypted_psw'] = dolDecrypt($encryptedPsw);
-                setEventMessages('Contraseña descifrada con éxito.', null, 'mesgs');
-            } else {
-                setEventMessages('No hay contraseña guardada.', null, 'errors');
-            }
-        }
-    }
-    header('Location: '.$_SERVER['PHP_SELF']);
-    exit;
-}
-// ---------- fin: handler para mostrar contraseña del certificado ----------
 
 // ---------- inicio: handler para descargar archivos del certificado ----------
 if ($action == 'downloadfile' && $user->admin) {
@@ -504,33 +493,33 @@ if ($action == 'downloadfile' && $user->admin) {
             header('Location: '.$_SERVER['PHP_SELF']);
             exit;
         } else {
+            // Se descargan los dos archivos originales del SAT (.cer y .key) en un .zip;
+            // los .pem se regeneran al volver a subirlos.
             $certNameCfg = getDolGlobalString('MAIN_INFO_CFDI_CERT_NAME');
-            $file = GETPOST('file', 'alpha');
-            if (empty($certNameCfg) || empty($file)) {
+            if (empty($certNameCfg) || cfdiCertDir($certNameCfg) === '') {
                 accessforbidden('Parámetros incorrectos');
             }
-            $allowedFiles = array(
-                $certNameCfg.'.cer',
-                $certNameCfg.'.cer.pem',
-                $certNameCfg.'.key',
-                $certNameCfg.'.key.pem'
-            );
-            if (!in_array($file, $allowedFiles)) {
-                accessforbidden('Archivo no permitido');
+            $zipPath = tempnam(sys_get_temp_dir(), 'cfdi');
+            $zip = new ZipArchive();
+            if ($zip->open($zipPath, ZipArchive::OVERWRITE) !== true) {
+                accessforbidden('No se pudo preparar la descarga');
             }
-            $filePath = cfdiCertDir($certNameCfg).$file;
-            if (cfdiCertDir($certNameCfg) === '' || !file_exists($filePath)) {
-                accessforbidden('El archivo no existe en el disco');
+            foreach (array('.cer', '.key') as $suffix) {
+                $certFile = cfdiCertFile($certNameCfg, $suffix);
+                if (file_exists($certFile)) {
+                    $zip->addFile($certFile, basename($certFile));
+                }
             }
-            // Stream file download
+            $zip->close();
             header('Content-Description: File Transfer');
-            header('Content-Type: application/octet-stream');
-            header('Content-Disposition: attachment; filename="'.basename($filePath).'"');
+            header('Content-Type: application/zip');
+            header('Content-Disposition: attachment; filename="'.cfdiCertSafeName($certNameCfg).'.zip"');
             header('Expires: 0');
             header('Cache-Control: must-revalidate');
             header('Pragma: public');
-            header('Content-Length: ' . filesize($filePath));
-            readfile($filePath);
+            header('Content-Length: ' . filesize($zipPath));
+            readfile($zipPath);
+            unlink($zipPath);
             exit;
         }
     }
@@ -559,26 +548,34 @@ print load_fiche_titre($langs->trans($page_name), $linkback, 'title_setup');
 $head = cfdiAdminPrepareHead();
 print dol_get_fiche_head($head, 'settings', $langs->trans($page_name), -1, "cfdi@cfdi");
 
-// Setup page goes here
-echo '<span class="opacitymedium">'.$langs->trans("CfdiSetupPage").'</span><br><br>';
+// Estado del certificado: si falta o venció, la acción principal es subirlo (sin él no se timbra).
+$certNameCfg   = getDolGlobalString('MAIN_INFO_CFDI_CERT_NAME');
+$certExpiryCfg = (int) getDolGlobalString('MAIN_INFO_CFDI_CERT_EXPIRY_TS');
+$certExpired   = ($certExpiryCfg > 0 && time() > $certExpiryCfg);
+$certNeedsUpload = empty($certNameCfg) || $certExpired;
 
-// Alerta de vencimiento del certificado configurado
-$currentCertName = getDolGlobalString('MAIN_INFO_CFDI_CERT_NAME');
-if (!empty($currentCertName)) {
-	$certStatus = cfdiParseCert($currentCertName);
-	if (empty($certStatus['error'])) {
-		if ($certStatus['expired']) {
-			print '<div class="warning">'.$langs->trans('CertExpiredWarning', abs($certStatus['daysLeft'])).'</div><br>';
-		} elseif ($certStatus['daysLeft'] <= 30) {
-			print '<div class="warning">'.$langs->trans('CertExpiringWarning', $certStatus['daysLeft']).'</div><br>';
-		}
-	}
-}
+print '<style>
+.cfdi-block { margin-bottom: 32px; max-width: 900px; }
+.cfdi-block h3 { margin: 0 0 12px; font-size: 1.1em; }
+.cfdi-card { border: 1px solid #e2e8f0; border-radius: 6px; padding: 16px 20px; background: #fff; }
+.cfdi-card table.noborder tr.oddeven td { background: transparent; }
+.cfdi-cert-line { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+.cfdi-cert-name { font-weight: bold; font-size: 1.1em; }
+.cfdi-badge { padding: 2px 10px; border-radius: 12px; font-size: .85em; font-weight: bold; }
+.cfdi-links { margin-top: 12px; }
+.cfdi-links a, .cfdi-links button.cfdi-link { background: none; border: 0; padding: 0; color: inherit; text-decoration: underline; cursor: pointer; font: inherit; }
+.cfdi-links .cfdi-sep { margin: 0 8px; color: #a0aec0; }
+.cfdi-links button.cfdi-link-danger { color: #c0392b; }
+.cfdi-upload { margin-top: 16px; padding-top: 16px; border-top: 1px solid #edf2f7; }
+.cfdi-upload td { padding: 6px 8px 6px 0; }
+.cfdi-block details > summary { cursor: pointer; margin-top: 12px; }
+.cfdi-actions { margin-top: 16px; text-align: right; }
+</style>';
 
-// Modal de confirmación de contraseña del usuario
+// Modal de confirmación de contraseña del usuario (subir y descargar certificado)
 print '<div id="cfdi-pwd-modal" style="display:none;position:fixed;z-index:10000;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.45);">';
 print '  <div style="background:#fff;margin:14% auto;padding:24px 32px;max-width:440px;border-radius:4px;box-shadow:0 8px 28px rgba(0,0,0,0.22);">';
-print '    <h4 style="margin-top:0"><span class="fas fa-lock" style="color:#888;margin-right:6px"></span>Confirmar identidad</h4>';
+print '    <h4 style="margin-top:0">Confirmar identidad</h4>';
 print '    <p id="cfdi-pwd-modal-text" style="color:#555;margin-bottom:14px">Por seguridad, ingresa tu contraseña de Dolibarr.</p>';
 print '    <input type="password" id="cfdi-confirm-pwd" class="flat minwidth300" placeholder="Tu contraseña de acceso" autocomplete="current-password">';
 print '    <div style="margin-top:18px;text-align:right;">';
@@ -590,10 +587,8 @@ print '  </div>';
 print '</div>';
 print '<script>';
 print 'var cfdiModalAction = "save";';
-print 'var cfdiModalArg = "";';
-print 'function cfdiOpenModal(action, arg, msg){';
+print 'function cfdiOpenModal(action, msg){';
 print '  cfdiModalAction = action;';
-print '  cfdiModalArg = arg || "";';
 print '  if (msg) document.getElementById("cfdi-pwd-modal-text").innerText = msg;';
 print '  document.getElementById("cfdi-confirm-pwd").value="";';
 print '  document.getElementById("cfdi-pwd-modal").style.display="block";';
@@ -605,172 +600,144 @@ print '  if(!p){alert("Ingresa tu contraseña.");return;}';
 print '  if (cfdiModalAction === "save") {';
 print '    document.getElementById("cfdi-hidden-pwd").value=p;';
 print '    document.getElementById("cfdi-cert-form").submit();';
-print '  } else if (cfdiModalAction === "showpsw") {';
-print '    document.getElementById("cfdi-action-showpsw-pwd").value=p;';
-print '    document.getElementById("cfdi-form-showpsw").submit();';
 print '  } else if (cfdiModalAction === "download") {';
 print '    document.getElementById("cfdi-action-download-pwd").value=p;';
-print '    document.getElementById("cfdi-action-download-file").value=cfdiModalArg;';
 print '    document.getElementById("cfdi-form-download").submit();';
+print '    document.getElementById("cfdi-pwd-modal").style.display="none";';
 print '  }';
 print '}';
+print 'function cfdiSaveCert(){';
+print '  var f=document.getElementById("cfdi-cert-form");';
+print '  if(!f.reportValidity()) return;';
+print '  cfdiOpenModal("save", '.json_encode('Por seguridad, ingresa tu contraseña de Dolibarr para guardar el certificado.').');';
+print '}';
+print 'function cfdiToggleUpload(){var u=document.getElementById("cfdi-upload");u.style.display=(u.style.display==="none")?"block":"none";}';
 print 'document.addEventListener("DOMContentLoaded",function(){var el=document.getElementById("cfdi-confirm-pwd");if(el)el.addEventListener("keydown",function(e){if(e.key==="Enter")cfdiSubmitWithPwd();});});';
 print '</script>';
 
-// Formulario oculto para revelar password
-print '<form id="cfdi-form-showpsw" method="post" action="'.$_SERVER['PHP_SELF'].'?action=showpsw&token='.newToken().'">';
-print '<input type="hidden" name="confirm_password" id="cfdi-action-showpsw-pwd" value="">';
-print '</form>';
-
-// Formulario oculto para descargar archivos
 print '<form id="cfdi-form-download" method="post" action="'.$_SERVER['PHP_SELF'].'?action=downloadfile&token='.newToken().'">';
 print '<input type="hidden" name="confirm_password" id="cfdi-action-download-pwd" value="">';
-print '<input type="hidden" name="file" id="cfdi-action-download-file" value="">';
 print '</form>';
 
-// Formulario para subir certificado .cer/.pem y llave .key/.pem
-print '<h4>'.$langs->transnoentities('UploadCertAndKey').'</h4>';
-print '<form id="cfdi-cert-form" method="post" enctype="multipart/form-data" action="'.$_SERVER['PHP_SELF'].'?action=savecert&token='.newToken().'">';
-print '<input type="hidden" id="cfdi-hidden-pwd" name="confirm_password" value="">';
-print '<table class="border" width="100%">';
-print '<tr class="liste_titre"><td colspan="2" style="padding:6px 8px">Certificado SAT</td></tr>';
-print '<tr><td width="240">Certificado DER <span style="color:#888;font-size:.85em">(.cer)</span></td><td><input type="file" name="cert_cer" accept=".cer" required></td></tr>';
-print '<tr><td>Certificado PEM <span style="color:#888;font-size:.85em">(.cer.pem)</span></td><td><input type="file" name="cert_cer_pem" accept=".pem" required></td></tr>';
-print '<tr class="liste_titre"><td colspan="2" style="padding:6px 8px">Llave privada</td></tr>';
-print '<tr><td>Llave PKCS8 <span style="color:#888;font-size:.85em">(.key)</span></td><td><input type="file" name="cert_key" accept=".key" required></td></tr>';
-print '<tr><td>Llave PEM <span style="color:#888;font-size:.85em">(.key.pem)</span></td><td><input type="file" name="cert_key_pem" accept=".pem" required></td></tr>';
-print '<tr class="liste_titre"><td colspan="2" style="padding:6px 8px">Acceso</td></tr>';
-print '<tr><td>'.$langs->transnoentities('CertPassword').'</td><td><input type="password" name="cert_psw" autocomplete="new-password"></td></tr>';
-print '<tr><td></td><td><button class="butAction" type="button" onclick="cfdiOpenModal(\'save\', \'\', \'Por seguridad, ingresa tu contraseña de Dolibarr para guardar el certificado.\')">'.$langs->transnoentities('Save').'</button></td></tr>';
-print '</table>';
-print '</form>';
+// ── Bloque 1: Certificado SAT ─────────────────────────────────────────────
+print '<div class="cfdi-block">';
+print '<h3>'.$langs->trans('CfdiCertTitle').'</h3>';
+print '<div class="cfdi-card">';
 
-print '<br>';
-
-// Mostrar estado del certificado SAT actualmente configurado
-$certNameCfg   = getDolGlobalString('MAIN_INFO_CFDI_CERT_NAME');
-$certExpiryCfg = (int) getDolGlobalString('MAIN_INFO_CFDI_CERT_EXPIRY_TS');
 if (!empty($certNameCfg)) {
-    print '<h4>Certificado SAT actual</h4>';
-    print '<div class="div-table-responsive" style="max-width: 900px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; overflow: hidden;">';
-    print '<table class="noborder" style="width: 100%; border-collapse: collapse; margin: 0;">';
-    
-    // Nombre
-    print '<tr style="border-bottom: 1px solid #edf2f7;">';
-    print '<td width="200" style="padding: 14px 18px; font-weight: bold; background: #f8fafc; color: #4a5568;"><span class="fa fa-info-circle" style="margin-right: 8px; color: #718096;"></span>Nombre</td>';
-    print '<td style="padding: 14px 18px; color: #2d3748; font-weight: 500;">'.dol_escape_htmltag($certNameCfg).'</td>';
-    print '</tr>';
-    
-    // Vence
-    print '<tr style="border-bottom: 1px solid #edf2f7;">';
-    print '<td style="padding: 14px 18px; font-weight: bold; background: #f8fafc; color: #4a5568;"><span class="fa fa-calendar-alt" style="margin-right: 8px; color: #718096;"></span>Vence</td>';
-    if ($certExpiryCfg > 0) {
-        $nowTsCfg   = time();
-        $daysCfg    = (int) round(($certExpiryCfg - $nowTsCfg) / 86400);
-        $expiredCfg = ($nowTsCfg > $certExpiryCfg);
-        if ($expiredCfg)          { $clrCfg = '#d9534f'; $lblCfg = 'VENCIDO'; }
-        elseif ($daysCfg <= 30)   { $clrCfg = '#f0ad4e'; $lblCfg = 'Vence en '.$daysCfg.' días'; }
-        else                      { $clrCfg = '#22c55e'; $lblCfg = 'Vigente ('.$daysCfg.' días restantes)'; }
-        print '<td style="padding: 14px 18px; color: #2d3748;">';
-        print '<b style="font-size: 1.1em; color: #1a202c;">'.date('d/m/Y', $certExpiryCfg).'</b>';
-        print '<span style="background: '.$clrCfg.'15; color: '.$clrCfg.'; font-weight: bold; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; margin-left: 12px; border: 1px solid '.$clrCfg.'30; display: inline-block;">'.$lblCfg.'</span>';
-        print '</td>';
-    } else {
-        print '<td style="padding: 14px 18px;"><span style="background: #fef3c7; color: #d97706; font-weight: bold; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; border: 1px solid #fde68a;">No registrada — vuelva a subir el certificado para registrar la fecha</span></td>';
-    }
-    print '</tr>';
+	print '<div class="cfdi-cert-line">';
+	print '<span class="cfdi-cert-name">'.dol_escape_htmltag($certNameCfg).'</span>';
+	if ($certExpiryCfg > 0) {
+		$daysCfg = (int) round(($certExpiryCfg - time()) / 86400);
+		if ($certExpired) {
+			$clrCfg = '#c0392b'; $lblCfg = $langs->trans('CfdiCertExpired');
+		} elseif ($daysCfg <= 30) {
+			$clrCfg = '#d97706'; $lblCfg = $langs->trans('CfdiCertExpiresIn', $daysCfg);
+		} else {
+			$clrCfg = '#16a34a'; $lblCfg = $langs->trans('CfdiCertValid');
+		}
+		print '<span>'.$langs->trans('CfdiCertExpiresOn', date('d/m/Y', $certExpiryCfg)).'</span>';
+		print '<span class="cfdi-badge" style="color:'.$clrCfg.';background:'.$clrCfg.'15;">'.$lblCfg.'</span>';
+	} else {
+		print '<span class="cfdi-badge" style="color:#d97706;background:#fef3c7;">'.$langs->trans('CfdiCertNoExpiry').'</span>';
+	}
+	print '</div>';
 
-    // Contraseña
-    $decryptedPsw = '';
-    if (!empty($_SESSION['cfdi_decrypted_psw'])) {
-        $decryptedPsw = $_SESSION['cfdi_decrypted_psw'];
-        unset($_SESSION['cfdi_decrypted_psw']);
-    }
-    print '<tr style="border-bottom: 1px solid #edf2f7;">';
-    print '<td style="padding: 14px 18px; font-weight: bold; background: #f8fafc; color: #4a5568;"><span class="fa fa-key" style="margin-right: 8px; color: #718096;"></span>Contraseña</td>';
-    print '<td style="padding: 14px 18px;">';
-    if (!empty($decryptedPsw)) {
-        print '<span style="font-family: monospace; font-weight: bold; background: #f1f5f9; color: #0f172a; padding: 6px 12px; border-radius: 4px; border: 1px solid #cbd5e1; font-size: 1.1em; display: inline-block; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);">'.dol_escape_htmltag($decryptedPsw).'</span>';
-    } else {
-        print '<button class="butAction" type="button" style="margin: 0; padding: 5px 12px;" onclick="cfdiOpenModal(\'showpsw\', \'\', \'Por seguridad, ingresa tu contraseña de Dolibarr para ver la contraseña del certificado.\')"><span class="fa fa-eye" style="margin-right: 6px;"></span>Ver contraseña</button>';
-    }
-    print '</td>';
-    print '</tr>';
-
-    // Archivos asociados
-    print '<tr style="border-bottom: 1px solid #edf2f7;">';
-    print '<td style="padding: 14px 18px; font-weight: bold; background: #f8fafc; color: #4a5568;"><span class="fa fa-folder-open" style="margin-right: 8px; color: #718096;"></span>Archivos asociados</td>';
-    print '<td style="padding: 14px 18px;">';
-    print '<table class="noborder" style="width: 100%; margin: 0; padding: 0; border-collapse: collapse;">';
-    $assocFiles = array(
-        '.cer'     => array('Certificado DER', 'fa-file-contract'),
-        '.cer.pem' => array('Certificado PEM', 'fa-file-alt'),
-        '.key'     => array('Llave PKCS8', 'fa-key'),
-        '.key.pem' => array('Llave PEM', 'fa-key')
-    );
-    foreach ($assocFiles as $ext => $fileInfo) {
-        $label = $fileInfo[0];
-        $icon  = $fileInfo[1];
-        $filename = $certNameCfg.$ext;
-        print '<tr style="border-bottom: 1px dashed #e2e8f0;">';
-        print '<td width="200" style="padding: 10px 0; color: #4a5568;"><span class="fa '.$icon.'" style="margin-right: 8px; color: #a0aec0; width: 14px; text-align: center;"></span>'.$label.' <code style="font-size: 0.85em; background: #f1f5f9; padding: 2px 4px; border-radius: 3px; color: #64748b;">'.$ext.'</code></td>';
-        print '<td style="padding: 10px 0;">';
-        print '<span style="font-family: monospace; margin-right: 20px; display: inline-block; min-width: 200px; color: #1e293b; font-weight: 500;">'.dol_escape_htmltag($filename).'</span>';
-        print '<button class="butAction" type="button" style="padding: 4px 10px; font-size: 0.9em; margin: 0;" onclick="cfdiOpenModal(\'download\', \''.dol_escape_js($filename).'\', \'Por seguridad, ingresa tu contraseña de Dolibarr para descargar '.dol_escape_js($filename).'.\')"><span class="fa fa-download" style="margin-right: 6px;"></span>Descargar</button>';
-        print '</td>';
-        print '</tr>';
-    }
-    print '</table>';
-    print '</td>';
-    print '</tr>';
-
-    // Acciones (Eliminar)
-    print '<tr>';
-    print '<td style="padding: 16px 18px; background: #f8fafc;"></td>';
-    print '<td style="padding: 16px 18px; text-align: right;">';
-    print '<form method="post" action="'.$_SERVER['PHP_SELF'].'?action=deletecert&token='.newToken().'" onsubmit="return confirm('."'".dol_escape_js($langs->trans('DeleteCertConfirm'))."'".');" style="margin: 0; display: inline-block;">';
-    print '<button class="butActionDelete" type="submit" style="margin: 0; padding: 6px 14px;"><span class="fa fa-trash" style="margin-right: 6px;"></span>'.$langs->transnoentities('DeleteCert').'</button>';
-    print '</form>';
-    print '</td>';
-    print '</tr>';
-    
-    print '</table>';
-    print '</div>';
+	print '<div class="cfdi-links">';
+	print '<button type="button" class="cfdi-link" onclick="cfdiToggleUpload()">'.$langs->trans('CfdiCertReplace').'</button>';
+	print '<span class="cfdi-sep">·</span>';
+	print '<button type="button" class="cfdi-link" onclick="cfdiOpenModal(\'download\', '.dol_escape_htmltag(json_encode('Por seguridad, ingresa tu contraseña de Dolibarr para descargar el certificado.')).')">'.$langs->trans('CfdiCertDownload').'</button>';
+	print '<span class="cfdi-sep">·</span>';
+	print '<form method="post" action="'.$_SERVER['PHP_SELF'].'?action=deletecert&token='.newToken().'" onsubmit="return confirm('.dol_escape_htmltag(json_encode($langs->trans('DeleteCertConfirm'))).');" style="display:inline;">';
+	print '<button type="submit" class="cfdi-link cfdi-link-danger">'.$langs->trans('CfdiCertDelete').'</button>';
+	print '</form>';
+	print '</div>';
+} else {
+	print '<span class="opacitymedium">'.$langs->trans('CfdiCertMissing').'</span>';
 }
 
-// Historial de reemplazos de certificado
+// Subida: visible cuando falta o venció el certificado; si no, detrás de "Reemplazar certificado".
+print '<div id="cfdi-upload" class="cfdi-upload"'.($certNeedsUpload ? '' : ' style="display:none"').'>';
+print '<form id="cfdi-cert-form" method="post" enctype="multipart/form-data" action="'.$_SERVER['PHP_SELF'].'?action=savecert&token='.newToken().'">';
+print '<input type="hidden" id="cfdi-hidden-pwd" name="confirm_password" value="">';
+print '<table>';
+print '<tr><td width="200">'.$langs->trans('CfdiCertFileCer').'</td><td><input type="file" name="cert_cer" accept=".cer" required></td></tr>';
+print '<tr><td>'.$langs->trans('CfdiCertFileKey').'</td><td><input type="file" name="cert_key" accept=".key" required></td></tr>';
+print '<tr><td>'.$langs->trans('CertPassword').'</td><td><input type="password" name="cert_psw" class="flat minwidth200" autocomplete="new-password" required></td></tr>';
+print '</table>';
+print '<div class="cfdi-actions"><button type="button" class="'.($certNeedsUpload ? 'butAction' : 'button').'" onclick="cfdiSaveCert()">'.$langs->trans('CfdiCertUpload').'</button></div>';
+print '</form>';
+print '</div>';
+
+print '</div>';
+print '</div>';
+
+// ── Bloque 2: Conexión con el PAC ─────────────────────────────────────────
+// Lo de todos los días arriba; URLs del otro ambiente, cancelación y contrato SOAP en "avanzadas".
+$activeEnv = getDolGlobalString('CFDI_ENV', 'test') === 'prod' ? 'PROD' : 'TEST';
+$advancedKeys = array(
+	'CFDI_STAMP_URL_'.($activeEnv === 'PROD' ? 'TEST' : 'PROD'),
+	'CFDI_CANCEL_URL_TEST', 'CFDI_CANCEL_URL_PROD',
+	'CFDI_PAC_PROVIDER', 'CFDI_SOAP_NAMESPACE', 'CFDI_SOAP_METHOD', 'CFDI_TIME_ADJUST_HOURS',
+);
+$editPac = ($action == 'edit');
+$mainRows = '';
+$advancedRows = '';
+foreach ($formSetup->items as $setupItem) {
+	if (in_array($setupItem->confKey, $advancedKeys, true)) {
+		$advancedRows .= $formSetup->generateLineOutput($setupItem, $editPac);
+	} else {
+		$mainRows .= $formSetup->generateLineOutput($setupItem, $editPac);
+	}
+}
+
+print '<div class="cfdi-block">';
+print '<h3>'.$langs->trans('CfdiPacTitle').'</h3>';
+print '<div class="cfdi-card">';
+if ($editPac) {
+	print '<form method="post" action="'.$_SERVER['PHP_SELF'].'">';
+	print '<input type="hidden" name="token" value="'.newToken().'">';
+	print '<input type="hidden" name="action" value="update">';
+}
+print '<table class="noborder centpercent">'.$mainRows.'</table>';
+print '<details'.($editPac ? ' open' : '').'><summary>'.$langs->trans('CfdiAdvancedOptions').'</summary>';
+print '<table class="noborder centpercent">'.$advancedRows.'</table>';
+print '</details>';
+print '<div class="cfdi-actions">';
+if ($editPac) {
+	print '<a class="button button-cancel" href="'.$_SERVER['PHP_SELF'].'">'.$langs->trans('Cancel').'</a> ';
+	print '<input class="button button-save" type="submit" value="'.$langs->trans('Save').'">';
+} elseif ($certNeedsUpload) {
+	print '<a href="'.$_SERVER['PHP_SELF'].'?action=edit&token='.newToken().'">'.$langs->trans('Modify').'</a>';
+} else {
+	print '<a class="butAction" href="'.$_SERVER['PHP_SELF'].'?action=edit&token='.newToken().'">'.$langs->trans('Modify').'</a>';
+}
+print '</div>';
+if ($editPac) {
+	print '</form>';
+}
+print '</div>';
+print '</div>';
+
+// ── Bloque 3: Historial de certificados (colapsado) ───────────────────────
 $histJson = getDolGlobalString('CFDI_CERT_HISTORY');
 $hist = ($histJson ? @json_decode($histJson, true) : array());
 if (is_array($hist) && !empty($hist)) {
-    print '<h4>Historial de certificados</h4>';
-    print '<table class="noborder centpercent">';
-    print '<tr class="liste_titre">';
-    print '<td>Fecha</td><td>Certificado</td><td>Vencimiento</td><td>Subido por</td><td>Reemplazó a</td>';
-    print '</tr>';
-    foreach ($hist as $entry) {
-        $expHtml = !empty($entry['expiry']) ? date('d/m/Y', (int)$entry['expiry']) : '<span style="color:#aaa">—</span>';
-        $prevHtml = !empty($entry['prev']) ? dol_escape_htmltag($entry['prev']) : '<span style="color:#aaa">(ninguno)</span>';
-        print '<tr class="oddeven">';
-        print '<td>'.dol_escape_htmltag($entry['date']).'</td>';
-        print '<td><b>'.dol_escape_htmltag($entry['name']).'</b></td>';
-        print '<td>'.$expHtml.'</td>';
-        print '<td>'.dol_escape_htmltag($entry['userLogin']).'</td>';
-        print '<td>'.$prevHtml.'</td>';
-        print '</tr>';
-    }
-    print '</table><br>';
-}
-
-if ($action == 'edit') {
-	print $formSetup->generateOutput(true);
-	print '<br>';
-} elseif (!empty($formSetup->items)) {
-	print $formSetup->generateOutput();
-	print '<div class="tabsAction">';
-	print '<a class="butAction" href="'.$_SERVER["PHP_SELF"].'?action=edit&token='.newToken().'">'.$langs->trans("Modify").'</a>';
+	print '<div class="cfdi-block">';
+	print '<details><summary><b>'.$langs->trans('CfdiCertHistory', count($hist)).'</b></summary>';
+	print '<table class="noborder centpercent" style="margin-top:12px">';
+	print '<tr class="liste_titre"><td>Fecha</td><td>Certificado</td><td>Vencimiento</td><td>Subido por</td></tr>';
+	foreach ($hist as $entry) {
+		print '<tr class="oddeven">';
+		print '<td>'.dol_escape_htmltag($entry['date']).'</td>';
+		print '<td>'.dol_escape_htmltag($entry['name']).'</td>';
+		print '<td>'.(!empty($entry['expiry']) ? date('d/m/Y', (int) $entry['expiry']) : '—').'</td>';
+		print '<td>'.dol_escape_htmltag($entry['userLogin']).'</td>';
+		print '</tr>';
+	}
+	print '</table>';
+	print '</details>';
 	print '</div>';
-} else {
-	print '<br>'.$langs->trans("NothingToSetup");
 }
 
 

@@ -64,7 +64,7 @@ function CancelaCfdi($db, $ruta)
 
             $fecha = substr($xml2['Fecha'], 0, 10) . ' ' . substr($xml2['Fecha'], 11, 8);
 
-            $sql =  " INSERT INTO llx_kshCancelcfdi (FECHA, RFC, UUID, EstatusUUID, KeyName, DigestValue, SignatureValue, RSAKeyValue, Exponent) VALUES (";
+            $sql =  " INSERT INTO ".MAIN_DB_PREFIX."kshCancelcfdi (FECHA, RFC, UUID, EstatusUUID, KeyName, DigestValue, SignatureValue, RSAKeyValue, Exponent) VALUES (";
             $sql .= " '" .$xml2['Fecha'] . "','" . $xml2['RfcEmisor'] . "','" . $xml2->Folios->UUID . "',";
             $sql .= "  '" . $xml2->Folios->EstatusUUID . "','" . $xml2->Signature->KeyInfo->KeyName . "','" . $xml2->Signature->SignedInfo->Reference->DigestValue . "',";
             $sql .= " '" . $xml2->Signature->SignatureValue . "','" . $xml2->Signature->KeyInfo->KeyValue->RSAKeyValue->Modulus . "','" . $xml2->Signature->KeyInfo->KeyValue->RSAKeyValue->Exponent . "')";
@@ -147,7 +147,7 @@ function AcepRechazoCfdi($db, $ruta)
             print_r($xml2);
 
             $fecha = substr($xml2['Fecha'], 0, 10) . ' ' . substr($xml2['Fecha'], 11, 8);
-            $sql =  " INSERT INTO llx_kshacceptordeclinecfdi (FECHA, RFCEmisor, RFCReceptor, UUID, EstatusUUID, EstatusUUIDDesc, KeyName, DigestValue, SignatureValue, RSAKeyValue, Exponent) VALUES";
+            $sql =  " INSERT INTO ".MAIN_DB_PREFIX."kshacceptordeclinecfdi (FECHA, RFCEmisor, RFCReceptor, UUID, EstatusUUID, EstatusUUIDDesc, KeyName, DigestValue, SignatureValue, RSAKeyValue, Exponent) VALUES";
             $sql .= " ('" . $fecha . "','" . $xml2['RfcPac'] . "','" . $xml2['RfcReceptor'] . "','" . $xml2->Folios->UUID . "',";
             $sql .= "  '" . $xml2->Folios->EstatusUUID . "','" . $xml2->Folios['Respuesta'] . "','" . $xml2->Signature->KeyInfo->KeyName . "','" . $xml2->Signature->SignedInfo->Reference->DigestValue . "',";
             $sql .= " '" . $xml2->Signature->SignatureValue . "','" . $xml2->Signature->KeyInfo->KeyValue->RSAKeyValue->Modulus . "','" . $xml2->Signature->KeyInfo->KeyValue->RSAKeyValue->Exponent . "')";
@@ -216,7 +216,7 @@ function RelacionadosCfdi($db, $ruta)
 
             $fecha = substr($xml2['Fecha'], 0, 10) . ' ' . substr($xml2['Fecha'], 11, 8);
 
-            $sql =  " INSERT INTO llx_kshcfdirelations (UUIDConsult, RFCRecept, RFCEmisor, Result, UUIDRel) VALUES ";
+            $sql =  " INSERT INTO ".MAIN_DB_PREFIX."kshcfdirelations (UUIDConsult, RFCRecept, RFCEmisor, Result, UUIDRel) VALUES ";
             $sql .= " ('" . $xml2->UuidConsultado . "','" . $xml2->UuidsRelacionadosHijos->UuidRelacionado->RfcReceptor . "','" . $xml2->UuidsRelacionadosHijos->UuidRelacionado->RfcEmisor . "',";
             $sql .= " '" . $xml2->Resultado . "','" . $xml2->UuidsRelacionadosHijos->UuidRelacionado->Uuid . "')";
             $db->query($sql);
@@ -268,7 +268,7 @@ function statusCFDI($db,$rfc){
         //     print_r($xml2);
 
         //     $fecha = substr($xml2['Fecha'], 0, 10) . ' ' . substr($xml2['Fecha'], 11, 8);
-        //     $sql =  " INSERT INTO llx_kshacceptordeclinecfdi (FECHA, RFCEmisor, RFCReceptor, UUID, EstatusUUID, EstatusUUIDDesc, KeyName, DigestValue, SignatureValue, RSAKeyValue, Exponent) VALUES";
+        //     $sql =  " INSERT INTO ".MAIN_DB_PREFIX."kshacceptordeclinecfdi (FECHA, RFCEmisor, RFCReceptor, UUID, EstatusUUID, EstatusUUIDDesc, KeyName, DigestValue, SignatureValue, RSAKeyValue, Exponent) VALUES";
         //     $sql .= " ('" . $fecha . "','" . $xml2['RfcPac'] . "','" . $xml2['RfcReceptor'] . "','" . $xml2->Folios->UUID . "',";
         //     $sql .= "  '" . $xml2->Folios->EstatusUUID . "','" . $xml2->Folios['Respuesta'] . "','" . $xml2->Signature->KeyInfo->KeyName . "','" . $xml2->Signature->SignedInfo->Reference->DigestValue . "',";
         //     $sql .= " '" . $xml2->Signature->SignatureValue . "','" . $xml2->Signature->KeyInfo->KeyValue->RSAKeyValue->Modulus . "','" . $xml2->Signature->KeyInfo->KeyValue->RSAKeyValue->Exponent . "')";

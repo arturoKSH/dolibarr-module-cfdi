@@ -28,6 +28,21 @@ function cfdiSqlQuotedValue($value)
     return "'".$db->escape($value)."'";
 }
 
+// Fecha de emisión en la hora local del LugarExpedicion. Antes era NOW() - 2 h, que solo
+// cuadraba con un servidor de BD en UTC-4; con la BD en UTC el SAT la veía 4 h en el futuro.
+// CFDI_TIME_ADJUST_HOURS corrige a mano servidores con el reloj o la zona mal (ej. -2).
+function cfdiIssueDateSql()
+{
+    $tz = getDolGlobalString('CFDI_TIMEZONE', 'America/Mexico_City');
+    $now = new DateTime('now', new DateTimeZone($tz));
+    $adjust = getDolGlobalInt('CFDI_TIME_ADJUST_HOURS');
+    if ($adjust !== 0) {
+        $now->modify(($adjust > 0 ? '+' : '').$adjust.' hours');
+    }
+
+    return cfdiSqlQuotedValue($now->format('Y-m-d\TH:i:s'));
+}
+
 function cfdiIsProdEnv()
 {
     global $conf;
@@ -161,8 +176,8 @@ function getCustInf($Id)
                     CASE a.type  
                     when 2 then 'E' 
                     else  'I' end TipoDeComprobante,
-                   Concat( curdate() ,'T',DATE_FORMAT(DATE_SUB(DATE_ADD(NOW(), INTERVAL -2 HOUR),INTERVAL 000 MINUTE), '%H:%i:%S' ))  as Fecha2,
-                   Concat( curdate() ,'T',DATE_FORMAT(DATE_SUB(DATE_ADD(NOW(), INTERVAL -2 HOUR),INTERVAL 000 MINUTE), '%H:%i:%S' ))  as Fecha,
+                   ".cfdiIssueDateSql()."  as Fecha2,
+                   ".cfdiIssueDateSql()."  as Fecha,
                     TRIM(replace(a.ref,'NC','')) Folio , '4.0' Version,
                     (select 	h.serie
                                from 	".MAIN_DB_PREFIX."serie h
@@ -248,7 +263,7 @@ function getCustInfPym($Id)
 {   
         $receiverFields = cfdiPaymentReceiverFields();
         $sql = "select ".$receiverFields.", ifnull(d.propouse,'') propouse ,
-            Concat( curdate() ,'T',DATE_FORMAT(DATE_SUB(DATE_ADD(NOW(), INTERVAL -2 HOUR),INTERVAL 000 MINUTE), '%H:%i:%S' )) as Fecha
+            ".cfdiIssueDateSql()." as Fecha
             from 	".MAIN_DB_PREFIX."facture b
             inner join ".MAIN_DB_PREFIX."societe c on b.fk_soc = c.rowid
             left join ".MAIN_DB_PREFIX."societe_extrafields d on c.rowid = d.fk_object

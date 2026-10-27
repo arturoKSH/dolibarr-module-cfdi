@@ -433,70 +433,33 @@ class modCfdi extends DolibarrModules
 		// declared here before, so a fresh install had no way to create them.
 		include_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
 		$extrafields = new ExtraFields($this->db);
-		// UUID del CFDI timbrado (llenado por el modulo despues de timbrar la factura)
-		$extrafields->addExtraField('uuid', 'ExtrafieldCfdiUuid', 'varchar', 100, 40, 'facture', 0, 0, '', '', 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
-		// Almacen usado para el movimiento de stock al timbrar/cancelar
-		$extrafields->addExtraField('warehouse', 'ExtrafieldCfdiWarehouse', 'sellist', 101, 10, 'facture', 0, 0, '', array('options' => array('entrepot:ref:rowid::' => 'N')), 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
-		// Uso de CFDI (catalogo SAT, ya se instala en llx_usocfdi via sql/llx_usocfdi.sql)
-		$extrafields->addExtraField('propouse', 'ExtrafieldCfdiPropouse', 'sellist', 102, 20, 'facture', 0, 0, '', array('options' => array('usocfdi:Descripcion:usocfdi_id::' => 'N')), 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
-		$extrafields->addExtraField('propouse', 'ExtrafieldCfdiPropouse', 'sellist', 1, 20, 'thirdparty', 0, 0, '', array('options' => array('usocfdi:Descripcion:usocfdi_id::' => 'N')), 1, '', 0, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
-		// Regimen fiscal del receptor, con catalogo SAT del modulo.
-		$extrafields->addExtraField('fiscalreg', 'ExtrafieldCfdiFiscalRegimen', 'sellist', 2, 10, 'thirdparty', 0, 0, '', array('options' => array('FiscalRegimen:description:fiscalreg::' => 'N')), 1, '', 1, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
-		// Receptor alterno de la factura (por ejemplo, una sucursal o razon social).
-		$extrafields->addExtraField('invto', 'ExtrafieldCfdiInvoiceTo', 'sellist', 3, 10, 'thirdparty', 0, 0, '', array('options' => array('societe:nom:rowid::' => 'N')), 1, '', 1, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
-		// Serie CFDI del documento.
-		$extrafields->addExtraField('serie', 'ExtrafieldCfdiSerie', 'sellist', 103, 10, 'facture', 0, 0, '', array('options' => array('serie:serie:rowid::' => 'N')), 1, '', 1, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
-		// Exportacion CFDI 4.0.
-		$extrafields->addExtraField('export', 'ExtrafieldCfdiExportacion', 'select', 104, 2, 'facture', 0, 0, '01', array('options' => array('01' => 'No aplica', '02' => 'Definitiva', '03' => 'Temporal')), 1, '', 1, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
-		// Metodo de pago CFDI: PUE o PPD.
-		$extrafields->addExtraField('mofpaymt', 'ExtrafieldCfdiPaymentMethod', 'select', 105, 1, 'facture', 0, 0, '', array('options' => array('1' => 'PUE', '2' => 'PPD')), 1, '', 1, 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
-		// Datos opcionales de factura global y relaciones CFDI usados por el generador.
-		$extrafields->addExtraField('periodic', 'ExtrafieldCfdiPeriodicity', 'varchar', 106, 2, 'facture', 0, 0, '', '', 1, '', 1, '', '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
-		$extrafields->addExtraField('mth', 'ExtrafieldCfdiMonths', 'varchar', 107, 2, 'facture', 0, 0, '', '', 1, '', 1, '', '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
-		$extrafields->addExtraField('peranio', 'ExtrafieldCfdiYear', 'varchar', 108, 4, 'facture', 0, 0, '', '', 1, '', 1, '', '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
-		$extrafields->addExtraField('typerelsat', 'ExtrafieldCfdiRelationType', 'sellist', 109, 2, 'facture', 0, 0, '', array('options' => array('kshtyperelsat:description:idsat::' => 'N')), 1, '', 1, '', '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
-		// Cadena original: dato interno, no debe aparecer como campo editable al usuario.
-		$extrafields->addExtraField('stampcfdi', 'ExtrafieldCfdiOriginalString', 'text', 110, 0, 'facture', 0, 0, '', '', 1, '', 0, '', '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
-		// Datos SAT de producto y linea consultados por la generación de conceptos.
-		$extrafields->addExtraField('prodservid', 'ExtrafieldCfdiProductService', 'varchar', 100, 8, 'product', 0, 0, '', '', 1, '', 1, '', '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
-		$extrafields->addExtraField('udm', 'ExtrafieldCfdiUnit', 'sellist', 101, 10, 'product', 0, 0, '', array('options' => array('c_units:code:rowid::' => 'N')), 1, '', 1, '', '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
-		$extrafields->addExtraField('taxobjct', 'ExtrafieldCfdiTaxObject', 'select', 100, 2, 'facturedet', 0, 0, '02', array('options' => array('01' => 'No objeto de impuesto', '02' => 'Sí objeto de impuesto', '03' => 'Sí objeto de impuesto y no obligado al desglose')), 1, '', 1, '', '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
-
-		// El complemento de pagos guarda su UUID en la tabla de pagos, no en una
-		// tabla de extrafields. La columna faltaba en instalaciones existentes.
-		$paymentUuidColumn = $this->db->query("SHOW COLUMNS FROM ".MAIN_DB_PREFIX."paiement LIKE 'uuid'");
-		if ($paymentUuidColumn && $this->db->num_rows($paymentUuidColumn) === 0) {
-			if (!$this->db->query("ALTER TABLE ".MAIN_DB_PREFIX."paiement ADD uuid varchar(40) NULL")) {
-				$this->error = $this->db->lasterror();
-				return -1;
+		dol_include_once('/cfdi/lib/cfdi.lib.php');
+		foreach (cfdiRequiredExtrafields() as $elementtype => $fields) {
+			foreach ($fields as $attr => $f) {
+				$extrafields->addExtraField($attr, $f['label'], $f['type'], $f['pos'], $f['size'], $elementtype, 0, 0, $f['default'], $f['param'], $f['alwayseditable'], '', $f['list'], 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
 			}
-		}
-		$paymentLinkColumns = array(
-			'num_parcial' => 'int NULL DEFAULT 1',
-			'fk_fac_delete' => 'int NULL DEFAULT NULL',
-			'status' => 'tinyint NOT NULL DEFAULT 0',
-		);
-		foreach ($paymentLinkColumns as $columnName => $columnDefinition) {
-			$paymentLinkColumn = $this->db->query("SHOW COLUMNS FROM ".MAIN_DB_PREFIX."paiement_facture LIKE '".$this->db->escape($columnName)."'");
-			if ($paymentLinkColumn && $this->db->num_rows($paymentLinkColumn) === 0) {
-				if (!$this->db->query("ALTER TABLE ".MAIN_DB_PREFIX."paiement_facture ADD ".$columnName." ".$columnDefinition)) {
-					$this->error = $this->db->lasterror();
-					return -1;
+			// addExtraField no modifica un campo ya existente: se corrige el tipo si una version previa lo creo distinto.
+			$extrafields->fetch_name_optionals_label($elementtype, true);
+			foreach ($fields as $attr => $f) {
+				if (($extrafields->attributes[$elementtype]['type'][$attr] ?? $f['type']) === $f['type']) {
+					continue;
 				}
+				if ($f['type'] === 'int') {
+					// Un valor no numérico haría fallar el ALTER a int en modo estricto.
+					$this->db->query("UPDATE ".MAIN_DB_PREFIX.$elementtype."_extrafields SET ".$attr." = NULL WHERE ".$attr." NOT REGEXP '^[0-9]+$'");
+				}
+				$extrafields->update($attr, $f['label'], $f['type'], $f['size'], $elementtype, 0, 0, $f['pos'], $f['param'], $f['alwayseditable'], '', $f['list'], '', $f['default'], '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');
 			}
 		}
 
-		// Claves SAT de forma de pago y unidad: los códigos de Dolibarr (VIR, KG...) no son claves SAT.
-		$satColumns = array(
-			'c_paiement' => array('code_sat', 'varchar(2) NULL'),
-			'c_units' => array('UOMId', 'varchar(5) NULL'),
-		);
-		foreach ($satColumns as $table => $column) {
-			$satColumn = $this->db->query("SHOW COLUMNS FROM ".MAIN_DB_PREFIX.$table." LIKE '".$column[0]."'");
-			if ($satColumn && $this->db->num_rows($satColumn) === 0) {
-				if (!$this->db->query("ALTER TABLE ".MAIN_DB_PREFIX.$table." ADD ".$column[0]." ".$column[1])) {
-					$this->error = $this->db->lasterror();
-					return -1;
+		foreach (cfdiRequiredColumns() as $table => $columns) {
+			foreach ($columns as $columnName => $columnDefinition) {
+				$existing = $this->db->query("SHOW COLUMNS FROM ".MAIN_DB_PREFIX.$table." LIKE '".$this->db->escape($columnName)."'");
+				if ($existing && $this->db->num_rows($existing) === 0) {
+					if (!$this->db->query("ALTER TABLE ".MAIN_DB_PREFIX.$table." ADD ".$columnName." ".$columnDefinition)) {
+						$this->error = $this->db->lasterror();
+						return -1;
+					}
 				}
 			}
 		}

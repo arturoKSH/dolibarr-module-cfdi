@@ -30,6 +30,7 @@ Settings = Configuración
 CfdiSetupPage = Página de configuración de Cfdi
 CfdiPacUser = Usuario PAC
 CfdiPacPassword = Contraseña PAC
+CfdiPacPasswordKeep = Deja vacío para conservar la actual
 CFDI_PAC_USER = Usuario PAC
 CFDI_PAC_PASSWORD = Contraseña PAC
 UploadCertAndKey = Subir Certificado y Llave
@@ -65,10 +66,12 @@ CfdiStampUrlTest = URL timbrado (Pruebas)
 CfdiStampUrlProd = URL timbrado (Producción)
 CfdiCancelUrlTest = URL cancelación (Pruebas)
 CfdiCancelUrlProd = URL cancelación (Producción)
-CfdiPacProvider = Proveedor PAC (referencia)
+CfdiPacProvider = Proveedor PAC
 CfdiPacProviderHelp = Solo informativo salvo que también ajustes namespace/método SOAP abajo.
 CfdiSoapNamespace = Namespace SOAP del PAC
 CfdiSoapMethod = Método SOAP de timbrado
+CfdiTimeAdjustHours = Ajuste de hora de emisión (horas)
+CfdiTimeAdjustHoursHelp = Horas que se suman o restan a la fecha del CFDI (hora de México). Úsalo solo si el PAC dice "Fecha y hora de generación fuera de rango": por ejemplo -2 resta 2 horas. Déjalo en 0 normalmente.
 
 #
 # Diagnostics page
@@ -112,16 +115,31 @@ CfdiCatalogFiscalRegimen = Regímenes Fiscales
 CfdiCatalogTypeRelSat = Tipos de Relación SAT
 CfdiCatalogSerie = Series de Folio
 CfdiCatalogCancelaciones = Cancelaciones registradas
+CfdiCatalogErrorLog = Bitácora de errores de timbrado y cancelación
+CfdiCatalogInvoiceRel = CFDI relacionados de facturas
+CfdiCatalogPayRel = CFDI relacionados de complementos de pago
+CfdiCatalogUsedByExtrafield = Catálogo del extrafield %s
 CfdiCertHistoryTitle = Historial de certificados
 CfdiConfirmPwdTitle = Confirmar identidad
 CfdiConfirmPwdBody = Por seguridad, ingresa tu contraseña de Dolibarr para guardar el certificado.
 CfdiConfirmPwdError = Contraseña de confirmación incorrecta.
+CfdiPhpExtensionsTitle = Extensiones PHP
+CfdiRequiredColumnsTitle = Columnas del módulo en tablas de Dolibarr
+CfdiVatRatesTitle = Tasas de IVA
+CfdiVatRateCol = Tasa
+CfdiVatCodeCol = Código
+CfdiVatCodeMissing = Sin código IVA/IEP: las líneas con esta tasa se timbran sin impuestos y el PAC las rechaza
 CfdiExtrafieldsFacturasTitle = Extrafields en Facturas
+CfdiExtrafieldsTercerosTitle = Extrafields en Terceros
+CfdiExtrafieldsProductosTitle = Extrafields en Productos
+CfdiExtrafieldsLineasTitle = Extrafields en Líneas de factura
 CfdiNameCol = Nombre
 CfdiLabelCol = Etiqueta
 CfdiTypeCol = Tipo
-CfdiDbColumn = Columna en BD
-CfdiNoExtrafieldsDefined = No hay extrafields definidos para facturas en llx_extrafields.
+CfdiExtrafieldMissing = Extrafield no declarado
+CfdiExtrafieldNoColumn = Declarado, pero falta la columna en BD
+CfdiExtrafieldWrongType = Tipo %s, debe ser %s
+CfdiExtrafieldsFixHint = Para corregirlo, desactiva y vuelve a activar el módulo CFDI.
 
 #
 # Error log page
@@ -177,3 +195,25 @@ MyWidgetDescription = Descripción de mi widget
 
 # Migracion de certificados a DOL_DATA_ROOT
 CfdiCertMigratedToDataRoot = Los certificados se movieron a un directorio privado fuera de custom/ (DOL_DATA_ROOT/cfdi/certs).
+
+# Configuración: certificado y PAC
+CfdiCertTitle = Certificado SAT
+CfdiCertExpiresOn = Vence el %s
+CfdiCertValid = Vigente
+CfdiCertExpiresIn = Vence en %s días
+CfdiCertExpired = Vencido
+CfdiCertNoExpiry = Fecha no registrada: vuelve a subir el certificado
+CfdiCertReplace = Reemplazar certificado
+CfdiCertDownload = Descargar
+CfdiCertDelete = Eliminar
+CfdiCertMissing = No hay certificado. Sin él no se puede timbrar.
+CfdiCertFileCer = Certificado (.cer)
+CfdiCertFileKey = Llave privada (.key)
+CfdiCertUpload = Subir certificado
+CfdiCertFilesRequired = Se requieren el certificado (.cer) y la llave privada (.key).
+CfdiCertBadExtension = Extensiones inválidas. Se esperan .cer y .key.
+CfdiCertKeyMismatch = La llave privada no corresponde al certificado.
+CfdiPacTitle = Conexión con el PAC
+CfdiAdvancedOptions = Opciones avanzadas
+CfdiCertHistory = Historial de certificados (%s)
+CfdiDefaultValue = %s (por defecto)

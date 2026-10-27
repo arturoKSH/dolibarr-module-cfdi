@@ -6,6 +6,12 @@
     return;
   }
 
+  if (!class_exists('SoapClient')) {
+    setEventMessages('No se puede timbrar: falta la extensión PHP "soap" en el servidor.', null, 'errors');
+    cfdiLogError($db, 'timbrado', $object->ref, 'Falta la extension PHP soap', $object->id);
+    return;
+  }
+
   $handle = fopen($fname, "r");
   $sData = '';
 
