@@ -39,7 +39,7 @@ function cfdiAdminPrepareHead()
 	$h = 0;
 	$head = array();
 
-	$head[$h][0] = dol_buildpath("/cfdi/admin/setup.php", 1);
+	$head[$h][0] = dol_buildpath("/custom/cfdi/admin/setup.php", 1);
 	$head[$h][1] = $langs->trans("Settings");
 	$head[$h][2] = 'settings';
 	$h++;
@@ -55,17 +55,17 @@ function cfdiAdminPrepareHead()
 	$h++;
 	*/
 
-	$head[$h][0] = dol_buildpath("/cfdi/admin/about.php", 1);
+	$head[$h][0] = dol_buildpath("/custom/cfdi/admin/about.php", 1);
 	$head[$h][1] = $langs->trans("About");
 	$head[$h][2] = 'about';
 	$h++;
 
-	$head[$h][0] = dol_buildpath("/cfdi/admin/test.php", 1);
+	$head[$h][0] = dol_buildpath("/custom/cfdi/admin/test.php", 1);
 	$head[$h][1] = $langs->trans('CfdiDiagTitle');
 	$head[$h][2] = 'test';
 	$h++;
 
-	$head[$h][0] = dol_buildpath("/cfdi/admin/errorlog.php", 1);
+	$head[$h][0] = dol_buildpath("/custom/cfdi/admin/errorlog.php", 1);
 	$head[$h][1] = $langs->trans('CfdiErrorLogTitle');
 	$head[$h][2] = 'errorlog';
 	$h++;

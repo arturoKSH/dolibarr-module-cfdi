@@ -95,7 +95,7 @@ $linkback = '<a href="'.($backtopage ? $backtopage : DOL_URL_ROOT.'/admin/module
 print load_fiche_titre($langs->trans($page_name), $linkback, 'title_setup');
 
 $head = cfdiAdminPrepareHead();
-print dol_get_fiche_head($head, 'test', $langs->trans($page_name), -1, "cfdi@cfdi");
+print dol_get_fiche_head($head, 'test', $langs->trans($page_name), -1, 'file-signature');
 
 print '<h3>'.$langs->trans('CfdiDiagTitle').'</h3>';
 print '<p class="opacitymedium">'.$langs->trans('CfdiDiagIntro').'</p>';
@@ -266,7 +266,7 @@ if ($runTest) {
 				continue;
 			}
 			$sellistTable = explode(':', (string) key($f['param']['options']))[0];
-			if (!isset($catalogTables[$sellistTable]) && file_exists(dol_buildpath('/cfdi/sql/llx_'.$sellistTable.'.sql', 0))) {
+			if (!isset($catalogTables[$sellistTable]) && file_exists(dol_buildpath('/custom/cfdi/sql/llx_'.$sellistTable.'.sql', 0))) {
 				$catalogTables[$sellistTable] = $langs->trans('CfdiCatalogUsedByExtrafield', $attr);
 			}
 		}

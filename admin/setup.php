@@ -546,7 +546,7 @@ print load_fiche_titre($langs->trans($page_name), $linkback, 'title_setup');
 
 // Configuration header
 $head = cfdiAdminPrepareHead();
-print dol_get_fiche_head($head, 'settings', $langs->trans($page_name), -1, "cfdi@cfdi");
+print dol_get_fiche_head($head, 'settings', $langs->trans($page_name), -1, 'file-signature');
 
 // Estado del certificado: si falta o venció, la acción principal es subirlo (sin él no se timbra).
 $certNameCfg   = getDolGlobalString('MAIN_INFO_CFDI_CERT_NAME');

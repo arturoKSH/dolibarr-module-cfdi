@@ -139,7 +139,7 @@ $formfile = new FormFile($db);
 
 llxHeader("", $langs->trans("CfdiArea"));
 
-print load_fiche_titre($langs->trans("CfdiArea"), '', 'cfdi.png@cfdi');
+print load_fiche_titre($langs->trans("CfdiArea"), '', 'file-signature');
 
 // Banner de estado del certificado SAT
 if (!empty($certStatus)) {
@@ -160,12 +160,12 @@ if (!empty($certStatus)) {
 		print ' &mdash; Vence: <b>'.dol_escape_htmltag($certStatus['expiry']).'</b>';
 	}
 	print ' <span style="color:'.$certColor.';font-weight:bold;">('.$certMsg.')</span>';
-	print ' <a href="'.dol_buildpath('/cfdi/admin/test.php', 1).'" style="margin-left:10px;font-size:0.9em;">Ver diagnóstico completo</a>';
+	print ' <a href="'.dol_buildpath('/custom/cfdi/admin/test.php', 1).'" style="margin-left:10px;font-size:0.9em;">Ver diagnóstico completo</a>';
 	print '</div>';
 } else {
 	print '<div style="border-left:4px solid #d9534f;background:#f9f9f9;padding:10px 15px;margin:0 0 15px 0;border-radius:3px;">';
 	print '<b><span class="fas fa-times-circle" style="color:#d9534f"></span> Certificado SAT: No configurado</b>';
-	print ' &mdash; Configure el certificado en <a href="'.dol_buildpath('/cfdi/admin/setup.php', 1).'">CFDI &gt; Configuración</a>.';
+	print ' &mdash; Configure el certificado en <a href="'.dol_buildpath('/custom/cfdi/admin/setup.php', 1).'">CFDI &gt; Configuración</a>.';
 	print '</div>';
 }
 
@@ -246,7 +246,7 @@ if (isModEnabled('cfdi') && $user->rights->cfdi->read)
 }
 END MODULEBUILDER DRAFT MYOBJECT */
 
-$setupUrl = dol_buildpath('/cfdi/admin/setup.php', 1);
+$setupUrl = dol_buildpath('/custom/cfdi/admin/setup.php', 1);
 print '<a class="butAction" href="'.$setupUrl.'"><span class="fas fa-cog"></span> Configurar CFDI</a>';
 print '</div><div class="fichetwothirdright">';
 

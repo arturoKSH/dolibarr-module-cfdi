@@ -288,7 +288,7 @@ class modCfdi extends DolibarrModules
 			'prefix' => img_picto('', $this->picto, 'class="paddingright pictofixedwidth valignmiddle"'),
 			'mainmenu'=>'cfdi',
 			'leftmenu'=>'',
-			'url'=>'/cfdi/cfdiindex.php',
+			'url'=>'/custom/cfdi/cfdiindex.php',
 			'langs'=>'cfdi@cfdi', // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
 			'position'=>1000 + $r,
 			'enabled'=>'isModEnabled("cfdi")', // Define condition to show or hide menu entry. Use 'isModEnabled("cfdi")' if entry must be visible if module is enabled.
@@ -422,7 +422,7 @@ class modCfdi extends DolibarrModules
 		global $conf, $langs;
 
 		//$result = $this->_load_tables('/install/mysql/', 'cfdi');
-		$result = $this->_load_tables('/cfdi/sql/');
+		$result = $this->_load_tables('/custom/cfdi/sql/');
 		if ($result < 0) {
 			return -1; // Do not activate module if error 'not allowed' returned when loading module SQL queries (the _load_table run sql with run_sql with the error allowed parameter set to 'default')
 		}
@@ -433,7 +433,7 @@ class modCfdi extends DolibarrModules
 		// declared here before, so a fresh install had no way to create them.
 		include_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
 		$extrafields = new ExtraFields($this->db);
-		dol_include_once('/cfdi/lib/cfdi.lib.php');
+		dol_include_once('/custom/cfdi/lib/cfdi.lib.php');
 		foreach (cfdiRequiredExtrafields() as $elementtype => $fields) {
 			foreach ($fields as $attr => $f) {
 				$extrafields->addExtraField($attr, $f['label'], $f['type'], $f['pos'], $f['size'], $elementtype, 0, 0, $f['default'], $f['param'], $f['alwayseditable'], '', $f['list'], 0, '', '', 'cfdi@cfdi', '$conf->cfdi->enabled');

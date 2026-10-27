@@ -60,7 +60,7 @@ $linkback = '<a href="'.($backtopage ? $backtopage : DOL_URL_ROOT.'/admin/module
 print load_fiche_titre($langs->trans($page_name), $linkback, 'title_setup');
 
 $head = cfdiAdminPrepareHead();
-print dol_get_fiche_head($head, 'errorlog', $langs->trans($page_name), -1, "cfdi@cfdi");
+print dol_get_fiche_head($head, 'errorlog', $langs->trans($page_name), -1, 'file-signature');
 
 print '<h3>'.$langs->trans('CfdiErrorLogTitle').'</h3>';
 print '<p class="opacitymedium">'.$langs->trans('CfdiErrorLogIntro').'</p>';

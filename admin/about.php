@@ -93,9 +93,9 @@ print load_fiche_titre($langs->trans($page_name), $linkback, 'title_setup');
 
 // Configuration header
 $head = cfdiAdminPrepareHead();
-print dol_get_fiche_head($head, 'about', $langs->trans($page_name), 0, 'cfdi@cfdi');
+print dol_get_fiche_head($head, 'about', $langs->trans($page_name), 0, 'file-signature');
 
-dol_include_once('/cfdi/core/modules/modCfdi.class.php');
+dol_include_once('/custom/cfdi/core/modules/modCfdi.class.php');
 $tmpmodule = new modCfdi($db);
 print $tmpmodule->getDescLong();
 
