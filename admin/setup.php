@@ -342,16 +342,14 @@ if ($action == 'savecert' && $user->admin) {
             $extCer = strtolower(pathinfo($cer['name'], PATHINFO_EXTENSION));
             $extKey = strtolower(pathinfo($key['name'], PATHINFO_EXTENSION));
 
-            if ($extCer !== 'cer' || $extKey !== 'key') {
+            if (!in_array($extCer, array('cer', 'pem'), true) || !in_array($extKey, array('key', 'pem'), true)) {
                 setEventMessages($langs->trans('CfdiCertBadExtension'), null, 'errors');
             } elseif ($cer['error'] !== UPLOAD_ERR_OK || $key['error'] !== UPLOAD_ERR_OK) {
                 setEventMessages($langs->trans('UploadError'), null, 'errors');
             } else {
-                // Los .pem se generan aquí a partir del .cer (DER) y del .key (PKCS8 cifrado del SAT).
-                $cerPemContent = cfdiDerToPem((string) file_get_contents($cer['tmp_name']), 'CERTIFICATE');
+                $cerPemContent = cfdiCertificateToPem(file_get_contents($cer['tmp_name']));
                 $certRes = @openssl_x509_read($cerPemContent);
-                $pkeyRes = @openssl_pkey_get_private(cfdiDerToPem((string) file_get_contents($key['tmp_name']), 'ENCRYPTED PRIVATE KEY'), $certPsw);
-                $keyPemContent = '';
+                list($pkeyRes, $keyPemContent) = cfdiPrivateKeyToPem(file_get_contents($key['tmp_name']), $certPsw);
 
                 if ($certRes === false || $pkeyRes === false) {
                     setEventMessages($langs->trans('InvalidCertOrPassword'), null, 'errors');
@@ -661,9 +659,9 @@ print '<div id="cfdi-upload" class="cfdi-upload"'.($certNeedsUpload ? '' : ' sty
 print '<form id="cfdi-cert-form" method="post" enctype="multipart/form-data" action="'.$_SERVER['PHP_SELF'].'?action=savecert&token='.newToken().'">';
 print '<input type="hidden" id="cfdi-hidden-pwd" name="confirm_password" value="">';
 print '<table>';
-print '<tr><td width="200">'.$langs->trans('CfdiCertFileCer').'</td><td><input type="file" name="cert_cer" accept=".cer" required></td></tr>';
-print '<tr><td>'.$langs->trans('CfdiCertFileKey').'</td><td><input type="file" name="cert_key" accept=".key" required></td></tr>';
-print '<tr><td>'.$langs->trans('CertPassword').'</td><td><input type="password" name="cert_psw" class="flat minwidth200" autocomplete="new-password" required></td></tr>';
+print '<tr><td width="200">'.$langs->trans('CfdiCertFileCer').'</td><td><input type="file" name="cert_cer" accept=".cer,.pem" required></td></tr>';
+print '<tr><td>'.$langs->trans('CfdiCertFileKey').'</td><td><input type="file" name="cert_key" accept=".key,.pem" required></td></tr>';
+print '<tr><td>'.$langs->trans('CertPassword').'</td><td><input type="password" name="cert_psw" class="flat minwidth200" autocomplete="new-password"><br><span class="opacitymedium">'.$langs->trans('CfdiCertPasswordOptionalHelp').'</span></td></tr>';
 print '</table>';
 print '<div class="cfdi-actions"><button type="button" class="'.($certNeedsUpload ? 'butAction' : 'button').'" onclick="cfdiSaveCert()">'.$langs->trans('CfdiCertUpload').'</button></div>';
 print '</form>';

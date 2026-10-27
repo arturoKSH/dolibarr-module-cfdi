@@ -222,6 +222,55 @@ function cfdiDerToPem($der, $label)
 }
 
 /**
+ * Normalize certificate content received as DER or PEM.
+ *
+ * @param string $content Certificate bytes
+ * @return string
+ */
+function cfdiCertificateToPem($content)
+{
+	$content = (string) $content;
+	return strpos($content, '-----BEGIN CERTIFICATE-----') !== false
+		? rtrim($content)."\n"
+		: cfdiDerToPem($content, 'CERTIFICATE');
+}
+
+/**
+ * Load a private key from encrypted/unencrypted DER or PEM and export it as owner-only PEM.
+ *
+ * @param string $content Private key bytes
+ * @param string $password Optional private key password
+ * @return array{resource|OpenSSLAsymmetricKey|false,string}
+ */
+function cfdiPrivateKeyToPem($content, $password = '')
+{
+	$content = (string) $content;
+	$candidates = array();
+
+	if (strpos($content, '-----BEGIN ') !== false) {
+		$candidates[] = $content;
+	} else {
+		$candidates[] = cfdiDerToPem($content, 'ENCRYPTED PRIVATE KEY');
+		$candidates[] = cfdiDerToPem($content, 'PRIVATE KEY');
+		$candidates[] = cfdiDerToPem($content, 'RSA PRIVATE KEY');
+	}
+
+	foreach ($candidates as $candidate) {
+		$key = @openssl_pkey_get_private($candidate, $password);
+		if ($key === false) {
+			continue;
+		}
+
+		$keyPem = '';
+		if (@openssl_pkey_export($key, $keyPem)) {
+			return array($key, $keyPem);
+		}
+	}
+
+	return array(false, '');
+}
+
+/**
  * Lee un .cer (DER o PEM) y devuelve info del certificado o array con error.
  *
  * @param  string $certName Nombre saneado del certificado (ver MAIN_INFO_CFDI_CERT_NAME)
