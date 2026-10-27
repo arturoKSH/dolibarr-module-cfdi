@@ -45,7 +45,7 @@ function cfdiAdminPrepareHead()
 	$h++;
 
 	/*
-	$head[$h][0] = dol_buildpath("/cfdi/admin/myobject_extrafields.php", 1);
+	$head[$h][0] = dol_buildpath("/custom/cfdi/admin/myobject_extrafields.php", 1);
 	$head[$h][1] = $langs->trans("ExtraFields");
 	$nbExtrafields = is_countable($extrafields->attributes['myobject']['label']) ? count($extrafields->attributes['myobject']['label']) : 0;
 	if ($nbExtrafields > 0) {
