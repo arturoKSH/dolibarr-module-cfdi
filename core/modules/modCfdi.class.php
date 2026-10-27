@@ -130,7 +130,7 @@ class modCfdi extends DolibarrModules
 		$this->dirs = array("/cfdi/temp");
 
 		// Config pages. Put here list of php page, stored into cfdi/admin directory, to use to setup module.
-		$this->config_page_url = array("setup.php@cfdi");
+		$this->config_page_url = array(DOL_URL_ROOT . "/custom/cfdi/admin/setup.php");
 
 		// Dependencies
 		// A condition to hide module
