@@ -153,7 +153,9 @@ function excQryFailed(&$errmsg = '')
 function getCustInf($Id)
 {   
         $receiverFields = cfdiInvoiceReceiverFields();
+        // RfcCliente: el RFC real del receptor (en pruebas, Rfc es el receptor de pruebas del SAT).
         $sql = " SELECT    ".$receiverFields.",
+                    case when e.rowid is null then b.siren else e.siren end RfcCliente,
                     ifnull(d.propouse,'') UsoCFDI ,round(total_ttc/multicurrency_total_ttc,2) as TipoCambio,
                     ABS(round(a.multicurrency_total_ht + 0.0000000001, 2)) SubTotal,
                     d.export Exportacion,

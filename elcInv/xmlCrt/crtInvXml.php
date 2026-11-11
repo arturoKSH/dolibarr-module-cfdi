@@ -33,6 +33,16 @@ if (excQryFailed($excQryError) || empty($objGrl)) {
     return;
 }
 
+// Público en general: el SAT fija estos datos, así que no se le exigen al cliente genérico.
+if ($objGrl[0]['RfcCliente'] == 'XAXX010101000') {
+    $genericReceptor = array('UsoCFDI' => 'S01', 'RegimenFiscalReceptor' => '616', 'DomicilioFiscalReceptor' => $conf->global->MAIN_INFO_ACCOUNTANT_ZIP);
+    foreach ($genericReceptor as $field => $value) {
+        if (empty($objGrl[0][$field])) {
+            $objGrl[0][$field] = $value;
+        }
+    }
+}
+
 $missingReceptor = array();
 foreach (array('Rfc', 'Nombre', 'DomicilioFiscalReceptor', 'RegimenFiscalReceptor', 'UsoCFDI') as $field) {
     // En NC a público en general el Nombre se fija más abajo como 'PUBLICO EN GENERAL'.

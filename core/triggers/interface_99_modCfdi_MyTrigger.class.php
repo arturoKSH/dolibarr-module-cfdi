@@ -219,7 +219,9 @@ class InterfaceMyTrigger extends DolibarrTriggers
                 return 1;
             //case 'BILL_MODIFY':
             case 'BILL_VALIDATE':
-                $this->buildCFDI($object);                
+                if (!$this->isPosTicketWithoutInvoiceRequest($object)) {
+                    $this->buildCFDI($object);
+                }
                 return 1;
             //case 'BILL_UNVALIDATE':
             //case 'BILL_SENTBYMAIL':
@@ -381,17 +383,46 @@ class InterfaceMyTrigger extends DolibarrTriggers
         // setEventMessages('99_modcfdi' . $object->array_options['options_deliverydate'], null, 'mesgs');
         // $this->db->query($sql);
     }
-    public function cfdisociete($object){
-        global $user;
-        //var_dump($object->thirdparty->array_options['options_propouse']);
-       // var_dump($object->array_options);
-         $object->array_options['options_propouse'] = $object->thirdparty->array_options['options_propouse'];
-       //  var_dump($object->array_options);
-      // exit;
-        
-        // echo $object->array_options['options_propouse']. '- - - - - - - ';
+    /**
+     * Ticket del punto de venta que no pidió factura: no lleva CFDI propio al validarse (se factura
+     * después en el portal o en la factura global), así que no se arma el XML ni se avisa de datos
+     * fiscales faltantes. Solo aplica donde existe la marca "requiere_factura" en la factura; sin
+     * ella, las ventas del punto de venta siguen armando su XML al validarse, como antes.
+     */
+    private function isPosTicketWithoutInvoiceRequest($object){
+        if ($object->module_source !== 'takepos') {
+            return false;
+        }
+        require_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
+        $extrafields = new ExtraFields($this->db);
+        $extrafields->fetch_name_optionals_label($object->table_element);
+        if (!isset($extrafields->attributes[$object->table_element]['label']['requiere_factura'])) {
+            return false;
+        }
+        if (!is_array($object->array_options) || !array_key_exists('options_requiere_factura', $object->array_options)) {
+            $object->fetch_optionals();
+        }
+        return empty($object->array_options['options_requiere_factura']);
+    }
 
-        // setEventMessages('aaaaaaaaaaaaaa', null, 'mesgs');
+    /**
+     * Copia el Uso de CFDI del cliente a la factura nueva que no trae uno. BILL_CREATE corre después
+     * de guardar los extrafields: asignarlo solo en memoria no lo dejaba guardado.
+     */
+    public function cfdisociete($object){
+        if (!empty($object->array_options['options_propouse'])) {
+            return;
+        }
+        if (empty($object->thirdparty) || empty($object->thirdparty->id)) {
+            $object->fetch_thirdparty();
+        }
+        if (empty($object->thirdparty->array_options['options_propouse'])) {
+            return;
+        }
+        $object->array_options['options_propouse'] = $object->thirdparty->array_options['options_propouse'];
+        if ($object->insertExtraFields() < 0) {
+            dol_syslog(__METHOD__.' no se pudo guardar el Uso de CFDI en la factura '.$object->id.': '.$object->error, LOG_ERR);
+        }
     }
 
     public function parciality($object){
