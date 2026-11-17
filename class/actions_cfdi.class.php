@@ -484,19 +484,9 @@ class ActionsCfdi
 	 */
 	public function beforePDFCreation($parameters, &$object, &$action)
 	{
-		global $conf, $user, $langs;
-		global $hookmanager;
-
-		$outputlangs = $langs;
-
-		$ret = 0; $deltemp = array();
-		dol_syslog(get_class($this).'::executeHooks action='.$action);
-
-		/* print_r($parameters); print_r($object); echo "action: " . $action; */
-		if (in_array($parameters['currentcontext'], array('somecontext1', 'somecontext2'))) {		// do something only for the context 'somecontext1' or 'somecontext2'
-		}
-
-		return $ret;
+		require_once __DIR__.'/cfdipdfblock.class.php';
+		CfdiPdfBlock::reserve($object);
+		return 0;
 	}
 
 	/**
@@ -511,20 +501,24 @@ class ActionsCfdi
 	 */
 	public function afterPDFCreation($parameters, &$pdfhandler, &$action)
 	{
-		global $conf, $user, $langs;
-		global $hookmanager;
+		require_once __DIR__.'/cfdipdfblock.class.php';
+		CfdiPdfBlock::restore();
+		return 0;
+	}
 
-		$outputlangs = $langs;
-
-		$ret = 0; $deltemp = array();
-		dol_syslog(get_class($this).'::executeHooks action='.$action);
-
-		/* print_r($parameters); print_r($object); echo "action: " . $action; */
-		if (in_array($parameters['currentcontext'], array('somecontext1', 'somecontext2'))) {
-			// do something only for the context 'somecontext1' or 'somecontext2'
-		}
-
-		return $ret;
+	/**
+	 * Dibuja los datos fiscales del CFDI timbrado debajo de los totales (modelos sponge y octopus).
+	 *
+	 * @param	array	$parameters     pdf, object (factura), index, posy
+	 * @param   Object	$pdfhandler     Modelo que genera el PDF
+	 * @param   string	$action         Acción
+	 * @return  int                     0
+	 */
+	public function afterPDFTotalTable($parameters, &$pdfhandler, &$action)
+	{
+		require_once __DIR__.'/cfdipdfblock.class.php';
+		CfdiPdfBlock::draw($parameters['pdf'], $parameters['object'], $pdfhandler);
+		return 0;
 	}
 
 

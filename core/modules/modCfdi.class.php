@@ -117,7 +117,7 @@ class modCfdi extends DolibarrModules
 			'hooks' => array(
 				'data' => array(
 					'invoicecard',
-				  //  'hookcontext2',
+					'pdfgeneration',	// bloque fiscal del CFDI en el PDF (class/cfdipdfblock.class.php)
 				),
 				  'entity' => '0',
 			),
