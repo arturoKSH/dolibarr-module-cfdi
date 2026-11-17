@@ -389,3 +389,66 @@ function cfdiRequiredColumns()
 		),
 	);
 }
+
+/*
+ * Montos del CFDI en enteros de millonésimas (6 decimales, el máximo del SAT): sumas y redondeos
+ * exactos sin floats y sin depender de bcmath.
+ */
+
+/**
+ * Monto de una consulta a millonésimas. Sin comas de miles ni signo (el XML lleva importes positivos).
+ *
+ * @param  mixed $value Valor de la consulta
+ * @return int
+ */
+function cfdiMicros($value)
+{
+	$value = str_replace(array(',', '-', ' '), '', trim((string) $value));
+	if ($value === '' || !preg_match('/^(\d*)(?:\.(\d*))?$/', $value, $m)) {
+		return 0;
+	}
+	$dec = isset($m[2]) ? $m[2] : '';
+	$micros = (int) $m[1] * 1000000 + (int) str_pad(substr($dec, 0, 6), 6, '0');
+	return (strlen($dec) > 6 && $dec[6] >= '5') ? $micros + 1 : $micros;
+}
+
+/**
+ * Base por tasa (ambas en millonésimas), redondeado half-up a millonésimas.
+ *
+ * @param  int $base Base
+ * @param  int $rate TasaOCuota
+ * @return int
+ */
+function cfdiMulRate($base, $rate)
+{
+	// Se separa la parte entera para que base * tasa no desborde int64 en importes grandes.
+	$whole = intdiv($base, 1000000);
+	$frac = $base % 1000000;
+	return $whole * $rate + intdiv($frac * $rate + 500000, 1000000);
+}
+
+/**
+ * Redondeo half-up de millonésimas a $decimals decimales; el resultado sigue en millonésimas.
+ *
+ * @param  int $micros   Monto
+ * @param  int $decimals Decimales (0-6)
+ * @return int
+ */
+function cfdiRoundMicros($micros, $decimals)
+{
+	$step = (int) pow(10, 6 - $decimals);
+	return intdiv($micros + intdiv($step, 2), $step) * $step;
+}
+
+/**
+ * Millonésimas como texto con $decimals decimales (redondeando half-up).
+ *
+ * @param  int $micros   Monto
+ * @param  int $decimals Decimales (1-6)
+ * @return string
+ */
+function cfdiFmt($micros, $decimals)
+{
+	$micros = cfdiRoundMicros($micros, $decimals);
+	return intdiv($micros, 1000000).'.'.substr(str_pad((string) ($micros % 1000000), 6, '0', STR_PAD_LEFT), 0, $decimals);
+}
