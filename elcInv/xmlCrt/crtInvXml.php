@@ -22,7 +22,8 @@ if (empty($certName)) {
 $search  = array('-', ',');
 $replace = array('', '');
 
-$grlArray=array('Total','Moneda','SubTotal','MetodoPago','Descuento',
+// SubTotal, Descuento y Total no van aquí: se calculan al final con la suma de los conceptos.
+$grlArray=array('Moneda','MetodoPago',
                 'FormaPago','CondicionesDePago','TipoDeComprobante',
                 'Fecha','Folio','Serie','LugarExpedicion','Version','Exportacion');
 
@@ -234,8 +235,11 @@ foreach ($custArray as $key => $value)
 }
 //Fin Receptor------
 //conceptos-------
-$retTaxBoo = false;
-$trasTaxBoo = false;
+// Acumulados de los conceptos (millonésimas, ver cfdiMicros()) para los totales del comprobante.
+$sumImporte = 0;
+$sumDescuento = 0;
+$trasTot = array();   // Impuesto|TipoFactor|TasaOCuota => Base, Importe
+$retTot = array();    // Impuesto => Importe
 
 $objdtl = getDtlInv($id);
 if (excQryFailed($excQryError) || empty($objdtl)) {
@@ -245,7 +249,6 @@ if (excQryFailed($excQryError) || empty($objdtl)) {
 $concepts = crtElmnt($xml,'http://www.sat.gob.mx/cfd/4',"cfdi:Conceptos", $mainElmnt);//PAT
 
 $array=array('ClaveProdServ','ClaveUnidad','NoIdentificacion','Cantidad','Unidad','Descripcion','ValorUnitario','Importe','Descuento','ObjetoImp');
-$arraytax=array('Base','Impuesto','TipoFactor','TasaOCuota','Importe');
 
 
 foreach ($objdtl as $key => $value2) {
@@ -280,115 +283,122 @@ foreach ($objdtl as $key => $value2) {
               
         
     }
-    if($value2["vat_src_code"] == 'IVAIEPSXAC'){
-        // Traslados
-        $taxDtl = getTrasTaxIEPS($value2["fk_facture"], $value2["rowid"]);
-        if(count($taxDtl))
-        {
-            $taxes=crtElmnt($xml,'http://www.sat.gob.mx/cfd/4',"cfdi:Impuestos",$concept);//PAT
-            $transTax=crtElmnt($xml,'http://www.sat.gob.mx/cfd/4',"cfdi:Traslados",$taxes);//PAT        
-            foreach ($taxDtl as $taxKey => $taxValue){
-                $tranTax=crtElmnt($xml,'http://www.sat.gob.mx/cfd/4',"cfdi:Traslado",$transTax);//PAT
-                $trasTaxBoo = true;
-                foreach ($arraytax as $transKey => $transValue){
+    // Montos del concepto en millonésimas, los mismos que acaban de escribirse en sus atributos.
+    $cptImporte = cfdiMicros($value2['Importe']);
+    $cptDescuento = cfdiMicros($value2['Descuento']);
+    $cptBase = $cptImporte - $cptDescuento;
+    $sumImporte += $cptImporte;
+    $sumDescuento += $cptDescuento;
 
-                    //createAttribt($xml,$tranTax,$transValue, $taxValue[$transValue]);//PAT
-                    if($transValue == 'Importe'){
-                        $valorSinRedonear = number_format($taxValue[$transValue], 2, '.', '');// macv 02/07/2024 se agrega linea para dos decimales en importe
-                        createAttribt($xml,$tranTax,$transValue, $valorSinRedonear);//PAT
-                    }else{
-                        createAttribt($xml,$tranTax,$transValue, $taxValue[$transValue]);//PAT
-                    }
+    // De la BD solo se toma qué impuestos y tasas lleva la línea; Base e Importe se calculan sobre
+    // el concepto. Antes la Base era total_ht (ya redondeado a 2) y no cuadraba con Importe - Descuento.
+    $ieps = $value2["vat_src_code"] == 'IVAIEPSXAC';
+    $taxDtl = $ieps ? getTrasTaxIEPS($value2["fk_facture"], $value2["rowid"]) : getTrasTax($value2["fk_facture"], $value2["rowid"]);
+    $taxRetDtl = getRetTax($value2["fk_facture"], $value2["rowid"]);
+    $taxes = null;
+    if (count($taxDtl) || count($taxRetDtl)) {
+        $taxes = crtElmnt($xml,'http://www.sat.gob.mx/cfd/4',"cfdi:Impuestos",$concept);//PAT
+    }
+
+    if (count($taxDtl)) {
+        // IVAIEPSXAC: el IVA se calcula sobre el precio más el IEPS.
+        $iepsImporte = 0;
+        if ($ieps) {
+            foreach ($taxDtl as $taxValue) {
+                if ($taxValue['Impuesto'] == '003') {
+                    $iepsImporte += cfdiMulRate($cptBase, cfdiMicros($taxValue['TasaOCuota']));
                 }
             }
         }
-    }else{ 
-        // Traslados
-        $taxDtl = getTrasTax($value2["fk_facture"], $value2["rowid"]);
-        if(count($taxDtl))
-        {
-            $taxes=crtElmnt($xml,'http://www.sat.gob.mx/cfd/4',"cfdi:Impuestos",$concept);//PAT
-            $transTax=crtElmnt($xml,'http://www.sat.gob.mx/cfd/4',"cfdi:Traslados",$taxes);//PAT        
-            foreach ($taxDtl as $taxKey => $taxValue){
-                $tranTax=crtElmnt($xml,'http://www.sat.gob.mx/cfd/4',"cfdi:Traslado",$transTax);//PAT
-                $trasTaxBoo = true;
-                foreach ($arraytax as $transKey => $transValue){
-                    createAttribt($xml,$tranTax,$transValue, $taxValue[$transValue]);//PAT
-                }
+        $transTax = crtElmnt($xml,'http://www.sat.gob.mx/cfd/4',"cfdi:Traslados",$taxes);//PAT
+        foreach ($taxDtl as $taxValue) {
+            $tasa = cfdiMicros($taxValue['TasaOCuota']);
+            $base = ($ieps && $taxValue['Impuesto'] == '002') ? $cptBase + $iepsImporte : $cptBase;
+            $importe = cfdiMulRate($base, $tasa);
+            $tranTax = crtElmnt($xml,'http://www.sat.gob.mx/cfd/4',"cfdi:Traslado",$transTax);//PAT
+            createAttribt($xml, $tranTax, 'Base', cfdiFmt($base, 6));
+            createAttribt($xml, $tranTax, 'Impuesto', $taxValue['Impuesto']);
+            createAttribt($xml, $tranTax, 'TipoFactor', $taxValue['TipoFactor']);
+            createAttribt($xml, $tranTax, 'TasaOCuota', cfdiFmt($tasa, 6));
+            createAttribt($xml, $tranTax, 'Importe', cfdiFmt($importe, 6));
+
+            $grp = $taxValue['Impuesto'].'|'.$taxValue['TipoFactor'].'|'.$tasa;
+            if (!isset($trasTot[$grp])) {
+                $trasTot[$grp] = array('Impuesto' => $taxValue['Impuesto'], 'TipoFactor' => $taxValue['TipoFactor'], 'TasaOCuota' => $tasa, 'Base' => 0, 'Importe' => 0);
             }
+            $trasTot[$grp]['Base'] += $base;
+            $trasTot[$grp]['Importe'] += $importe;
         }
     }
-    
-    // Retenciones
-    $taxRetDtl = getRetTax($value2["fk_facture"], $value2["rowid"]);   
-    if(count($taxRetDtl))
-    {
-        if(!$taxes)
-            $taxes=crtElmnt($xml,'http://www.sat.gob.mx/cfd/4',"cfdi:Impuestos",$concept);//PAT
-        
-        $retsTax =crtElmnt($xml,'http://www.sat.gob.mx/cfd/4',"cfdi:Retenciones",$taxes);//PAT 
-        foreach ($taxRetDtl as $taxKey => $taxValue){
+
+    if (count($taxRetDtl)) {
+        $retsTax = crtElmnt($xml,'http://www.sat.gob.mx/cfd/4',"cfdi:Retenciones",$taxes);//PAT
+        foreach ($taxRetDtl as $taxValue) {
+            $tasa = cfdiMicros($taxValue['TasaOCuota']);
+            $importe = cfdiMulRate($cptBase, $tasa);
             $retTax = crtElmnt($xml,'http://www.sat.gob.mx/cfd/4',"cfdi:Retencion", $retsTax);//PAT
-            $retTaxBoo = true;
-            foreach ($arraytax as $retKey => $retValue){                
-                createAttribt($xml,$retTax,$retValue, $taxValue[$retValue]);//PAT                
-            }
+            createAttribt($xml, $retTax, 'Base', cfdiFmt($cptBase, 6));
+            createAttribt($xml, $retTax, 'Impuesto', $taxValue['Impuesto']);
+            createAttribt($xml, $retTax, 'TipoFactor', $taxValue['TipoFactor']);
+            createAttribt($xml, $retTax, 'TasaOCuota', cfdiFmt($tasa, 6));
+            createAttribt($xml, $retTax, 'Importe', cfdiFmt($importe, 6));
+
+            $retTot[$taxValue['Impuesto']] = ($retTot[$taxValue['Impuesto']] ?? 0) + $importe;
         }
     }
  }
 
- //fin conceptos---- 
- 
- 
- 
-    $arrayTotTran=array('Impuesto','TipoFactor','TasaOCuota','Importe','Base');    
-        
-    $totTax=crtElmnt($xml,'http://www.sat.gob.mx/cfd/4',"cfdi:Impuestos",$mainElmnt);//PAT
-    
-    $totTaxAmt=array($trasTaxBoo==true?'TotalImpuestosTrasladados':'NA',$retTaxBoo==true?'TotalImpuestosRetenidos':'NA');
-    // Totales Ret y Tras
-    foreach ($totTaxAmt as $keyTAmt => $valueTAmt)
-    {
-        if($valueTAmt !='NA')
-            createAttribt($xml, $totTax, $valueTAmt, $objGrl[0][$valueTAmt]);//PAT    
+ //fin conceptos----
+
+// Totales: el SAT valida cada uno contra el redondeo de la suma de los conceptos, así que se
+// calculan de ahí y no de los totales de Dolibarr (que suman líneas ya redondeadas).
+$totTraslados = 0;
+$totRetenidos = 0;
+foreach ($trasTot as $grp) {
+    $totTraslados += cfdiRoundMicros($grp['Importe'], 2);
+}
+foreach ($retTot as $importe) {
+    $totRetenidos += cfdiRoundMicros($importe, 2);
+}
+if (count($trasTot) || count($retTot)) {
+    $totTax = crtElmnt($xml,'http://www.sat.gob.mx/cfd/4',"cfdi:Impuestos",$mainElmnt);//PAT
+    if (count($retTot)) {
+        createAttribt($xml, $totTax, 'TotalImpuestosRetenidos', cfdiFmt($totRetenidos, 2));
     }
-    
-    //impuesto total Retenidos
-    $taxRetTot = getRetTotTax($id);
-    $arrayTorRet=array('Impuesto','Importe');    
-    
-    if(!$totTax)        
-        $totTax=crtElmnt($xml,'http://www.sat.gob.mx/cfd/4',"cfdi:Impuestos",$mainElmnt);//PAT
-    
-    if(count($taxRetTot))
-    {
+    if (count($trasTot)) {
+        createAttribt($xml, $totTax, 'TotalImpuestosTrasladados', cfdiFmt($totTraslados, 2));
+    }
+    if (count($retTot)) {
         $totTRet = crtElmnt($xml,"http://www.sat.gob.mx/cfd/4","cfdi:Retenciones",$totTax);//PAT
-        foreach ($taxRetTot as $taxTRKey => $taxTRValue){
-            $totRet = crtElmnt($xml,"http://www.sat.gob.mx/cfd/4","cfdi:Retencion", $totTRet);//PAT            
-            foreach ($arrayTorRet as $retTKey => $retTValue){                
-                createAttribt($xml,$totRet ,$retTValue, $taxTRValue[$retTValue]);//PAT
-            }
+        foreach ($retTot as $imp => $importe) {
+            $totRet = crtElmnt($xml,"http://www.sat.gob.mx/cfd/4","cfdi:Retencion", $totTRet);//PAT
+            createAttribt($xml, $totRet, 'Impuesto', $imp);
+            createAttribt($xml, $totRet, 'Importe', cfdiFmt($importe, 2));
         }
     }
-    
-    
-    //impuesto total trasladados
- 
-    $taxTransTot = getTrasTotTax($id);
-    if(count($taxTransTot))
-    {
+    if (count($trasTot)) {
         $totTTras = crtElmnt($xml,'http://www.sat.gob.mx/cfd/4',"cfdi:Traslados",$totTax);//PAT
-        foreach ($taxTransTot as $taxTTKey => $taxTTValue){
+        foreach ($trasTot as $grp) {
             $totTras = crtElmnt($xml,"http://www.sat.gob.mx/cfd/4","cfdi:Traslado", $totTTras);//PAT
-            foreach ($arrayTotTran as $trasTKey => $trasTValue){
-                $valorPositivo = '';
-                $valorPositivo = str_replace('-','',$taxTTValue[$trasTValue]);
-                createAttribt($xml,$totTras ,$trasTValue, $valorPositivo);//PAT
-            }
+            createAttribt($xml, $totTras, 'Impuesto', $grp['Impuesto']);
+            createAttribt($xml, $totTras, 'TipoFactor', $grp['TipoFactor']);
+            createAttribt($xml, $totTras, 'TasaOCuota', cfdiFmt($grp['TasaOCuota'], 6));
+            createAttribt($xml, $totTras, 'Importe', cfdiFmt($grp['Importe'], 2));
+            createAttribt($xml, $totTras, 'Base', cfdiFmt($grp['Base'], 2));
         }
-    }   
- 
- //fin inpuesto total
+    }
+}
+
+$subTotal = cfdiRoundMicros($sumImporte, 2);
+$descuento = cfdiRoundMicros($sumDescuento, 2);
+$total = $subTotal - $descuento + $totTraslados - $totRetenidos;
+createAttribt($xml, $mainElmnt, 'SubTotal', cfdiFmt($subTotal, 2));
+createAttribt($xml, $mainElmnt, 'Descuento', cfdiFmt($descuento, 2));
+createAttribt($xml, $mainElmnt, 'Total', cfdiFmt($total, 2));
+// Para medir qué tan seguido el CFDI difiere por centavos de lo cobrado (subprice guardado a 5 decimales).
+if ($total != cfdiRoundMicros(cfdiMicros($objGrl[0]['Total']), 2)) {
+    dol_syslog('CFDI '.$object->ref.': Total del XML '.cfdiFmt($total, 2).' distinto al de la factura '.$objGrl[0]['Total'], LOG_WARNING);
+}
 
 //cadena original 
 

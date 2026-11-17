@@ -402,91 +402,6 @@ function getTrasTaxIEPS($id, $dtlId)
 }
 
 
-function getTrasTotTax($id)
-{    
-    //round((sum(b.total_tva)/0.160000)+ 0.0000000001,2)
-    /*$sql = " select 	b.fk_facture,
-                            abs(sum(round((b.total_tva)/(b.total_tva/(b.total_ht+b.total_localtax1)) ,2)))  Base,
-                            '002' Impuesto,
-                            'Tasa' TipoFactor, 
-                            case when b.tva_tx > 16 then 0.160000 else round((b.tva_tx/100),6) end TasaOCuota, 
-                            abs(round(sum(b.total_tva)+ 0.0000000001,2)) Importe 
-            from ".MAIN_DB_PREFIX."facture a 
-            inner join ".MAIN_DB_PREFIX."facturedet b on a.rowid=b.fk_facture 
-            where b.fk_facture= ".$id." 
-            and locate('IVA',b.vat_src_code) > 0 
-            and case when b.tva_tx > 16 then 0.160000 else (b.tva_tx/100) end = 0.16
-            group by b.fk_facture
-            union all 
-            select 	b.fk_facture, 
-                            abs(round(sum(ifnull((b.total_tva / (b.tva_tx/100)),b.total_ht))+ 0.0000000001,2)) Base, 
-                            '002' Impuesto, 
-                            'Tasa' TipoFactor, 
-                            case when b.tva_tx > 16 then 0.160000 else round((b.tva_tx/100),6) end TasaOCuota, 
-                            abs(round(sum(b.total_tva)+ 0.0000000001,2)) Importe 
-            from ".MAIN_DB_PREFIX."facture a 
-            inner join ".MAIN_DB_PREFIX."facturedet b on a.rowid=b.fk_facture 
-            where b.fk_facture= ".$id." 
-            and locate('IVA',b.vat_src_code) > 0 
-            and case when b.tva_tx > 16 then 0.160000 else (b.tva_tx/100) end = 0.00
-            group by b.fk_facture
-            union all
-            select 	b.fk_facture,  
-                            abs(round((sum(b.total_localtax1)/0.080000)+ 0.0000000001,2)) Base, 
-                            '003' Impuesto, 
-                            'Tasa' TipoFactor, 
-                            ifnull(round((b.localtax1_tx/100),6),0.000000) TasaOCuota, 
-                            abs(round(sum(b.total_localtax1)+ 0.0000000001,2)) Importe 
-            from ".MAIN_DB_PREFIX."facture a 
-            inner join ".MAIN_DB_PREFIX."facturedet b on a.rowid=b.fk_facture 
-            where b.fk_facture= ".$id." 
-            and locate('IEP',b.vat_src_code) > 0
-            and ifnull((b.localtax1_tx/100),0.000000) = 0.080000
-            group by b.fk_facture
-            truncate(  sum(round((b.total_tva)/(b.total_tva/(b.total_ht+b.total_localtax1)) ,2)),6)  BaseOriginla, macv
- ";*/
-     $sql = " select 	b.fk_facture,
-            round(truncate( round(sum((b.total_tva)/(b.total_tva/(b.total_ht+b.total_localtax1)) ),2),6),2) Base,
-            '002' Impuesto,
-            'Tasa' TipoFactor, 
-            cast(case when b.tva_tx > 16 then 0.160000 else round((CAST(b.tva_tx as DECIMAL(10,2))/100),6)  end as char ) TasaOCuota, 
-            abs(round(sum(b.total_tva)+ 0.0000000001,2)) Importe 
-        from ".MAIN_DB_PREFIX."facture a 
-        inner join ".MAIN_DB_PREFIX."facturedet b on a.rowid=b.fk_facture 
-        where b.fk_facture= ".$id." 
-        and locate('IVA',b.vat_src_code) > 0 
-        and case when b.tva_tx > 16 then 0.160000 else (b.tva_tx/100) end = 0.160000
-        GROUP BY b.fk_facture, b.tva_tx
-        union all 
-        select 	b.fk_facture, 
-        abs(round(sum(ifnull((b.total_tva / (b.tva_tx/100)),b.total_ht))+ 0.0000000001,2)) Base, 
-            '002' Impuesto, 
-            'Tasa' TipoFactor, 
-            cast( case when b.tva_tx > 16 then 0.160000 else  round((CAST(b.tva_tx as DECIMAL(10,2))/100),6)  end as char) TasaOCuota, 
-            abs(round(sum(b.total_tva)+ 0.0000000001,2)) Importe 
-        from ".MAIN_DB_PREFIX."facture a 
-        inner join ".MAIN_DB_PREFIX."facturedet b on a.rowid=b.fk_facture 
-        where b.fk_facture= ".$id." 
-        and locate('IVA',b.vat_src_code) > 0 
-        and case when b.tva_tx > 16 then 0.160000 else (b.tva_tx/100) end = 0.00
-        GROUP BY b.fk_facture, b.tva_tx
-        union all
-        select 	b.fk_facture,  
-        abs(round((sum(b.total_localtax1)/0.080000)+ 0.0000000001,2)) Base, 
-            '003' Impuesto, 
-            'Tasa' TipoFactor, 
-            ifnull(format((b.localtax1_tx/100),6),0.000000) TasaOCuota, 
-            abs(round(sum(b.total_localtax1)+ 0.0000000001,2)) Importe 
-        from ".MAIN_DB_PREFIX."facture a 
-        inner join ".MAIN_DB_PREFIX."facturedet b on a.rowid=b.fk_facture 
-        where b.fk_facture= ".$id." 
-        and locate('IEP',b.vat_src_code) > 0
-        and ifnull((b.localtax1_tx/100),0.000000) = 0.080000
-        GROUP BY b.fk_facture, b.localtax1_tx
-        ";
-    return excQry($sql);
-    
-}
 function getRetTax($id, $dtlId)
 {    
     $sql = " select b.fk_facture
@@ -522,38 +437,6 @@ function getRetTax($id, $dtlId)
     //echo $sql;
     return excQry($sql);
     
-}
-function getRetTotTax($id)
-{    
-    $sql = " select abs(round(sum(ifnull((b.total_localtax2 / (b.localtax2_tx /100)),b.total_ht))+ 0.0000000001,2)) Base,
-                    '003' Impuesto,
-                    'Tasa' TipoFactor,
-                    round(ifnull(abs(b.localtax2_tx/100),0.000000),6) TasaOCuota,
-                    sum(abs(round(b.total_localtax2+ 0.0000000001,2))) Importe
-            from ".MAIN_DB_PREFIX."facture a 
-            inner join ".MAIN_DB_PREFIX."facturedet b on a.rowid=b.fk_facture 
-            left join ".MAIN_DB_PREFIX."product c on b.fk_product=c.rowid 
-            left join ".MAIN_DB_PREFIX."facture_extrafields d on a.rowid=d.fk_object 
-            left join ".MAIN_DB_PREFIX."facturedet_extrafields i on b.rowid = i.fk_object 
-            where b.fk_facture= ".$id."            
-            and abs(b.localtax2_tx) = 8
-            group by b.fk_facture, b.localtax2_tx
-            union all
-            select  abs(ifnull(round(sum(ifnull((b.total_localtax2 / (b.localtax2_tx /100)),b.total_ht))+ 0.0000000001,2),0.000000)) Base, 
-                    '002' Impuesto,
-                    'Tasa' TipoFactor,
-                    round(ifnull(abs(b.localtax2_tx/100),0.000000),6) TasaOCuota,
-                    ifnull((abs(round(b.total_localtax2+ 0.0000000001,2))),0.00) Importe 
-            from ".MAIN_DB_PREFIX."facture a 
-            inner join ".MAIN_DB_PREFIX."facturedet b on a.rowid=b.fk_facture 
-            left join ".MAIN_DB_PREFIX."product c on b.fk_product=c.rowid 
-            left join ".MAIN_DB_PREFIX."facture_extrafields d on a.rowid=d.fk_object 
-            left join ".MAIN_DB_PREFIX."facturedet_extrafields i on b.rowid = i.fk_object 
-            where b.fk_facture= ".$id."            
-            and abs(b.localtax2_tx) = 4
-            group by b.fk_facture, b.localtax2_tx
-            ";
-    return excQry($sql);    
 }
 function getRelType($id)
 {
